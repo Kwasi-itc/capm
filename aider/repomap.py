@@ -16,6 +16,7 @@ from grep_ast import TreeContext, filename_to_lang
 from pygments.lexers import guess_lexer_for_filename
 from pygments.token import Token
 from tqdm import tqdm
+import hashlib
 
 from aider.dump import dump
 from aider.special import filter_important_files
@@ -54,10 +55,14 @@ class RepoMap:
         max_context_window=None,
         map_mul_no_files=8,
         refresh="auto",
+        enable_optimized_search=True,
+        **kwargs
     ):
         self.io = io
         self.verbose = verbose
         self.refresh = refresh
+        self.enable_optimized_search = enable_optimized_search
+        
 
         if not root:
             root = os.getcwd()
@@ -80,11 +85,25 @@ class RepoMap:
         self.map_processing_time = 0
         self.last_map = None
 
+        # Token counting optimization caches (only if optimization enabled)
+        if self.enable_optimized_search:
+            self.token_count_cache = {}
+            self.content_hash_cache = {}
+            self.binary_search_cache = {}
+
+        # Agentic context management components
+        self.semantic_manager = None
+        self.conversational_manager = None
+        self.predictive_manager = None
+
+        
+
         if self.verbose:
             self.io.tool_output(
                 f"RepoMap initialized with map_mul_no_files: {self.map_mul_no_files}"
             )
 
+    
     def token_count(self, text):
         len_text = len(text)
         if len_text < 200:
@@ -98,6 +117,39 @@ class RepoMap:
         sample_tokens = self.main_model.token_count(sample_text)
         est_tokens = sample_tokens / len(sample_text) * len_text
         return est_tokens
+
+    def _get_content_hash(self, content):
+        """Generate a hash for content to use as cache key."""
+        import hashlib
+        return hashlib.md5(content.encode('utf-8')).hexdigest()[:16]
+
+    def optimized_token_count(self, content):
+        """Optimized token counting with caching."""
+        if not content:
+            return 0
+
+        # If optimization is disabled, use regular token counting
+        if not self.enable_optimized_search:
+            return self.token_count(content)
+
+        content_hash = self._get_content_hash(content)
+
+        # Check cache first
+        if content_hash in self.token_count_cache:
+            return self.token_count_cache[content_hash]
+
+        # Calculate token count
+        token_count = self.token_count(content)
+
+        # Store in cache (limit cache size)
+        if len(self.token_count_cache) > 1000:
+            # Remove oldest entries (simple FIFO)
+            oldest_keys = list(self.token_count_cache.keys())[:200]
+            for key in oldest_keys:
+                del self.token_count_cache[key]
+
+        self.token_count_cache[content_hash] = token_count
+        return token_count
 
     def get_repo_map(
         self,
@@ -347,6 +399,8 @@ class RepoMap:
         self, chat_fnames, other_fnames, mentioned_fnames, mentioned_idents, progress=None
     ):
         import networkx as nx
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        import multiprocessing
 
         defines = defaultdict(set)
         references = defaultdict(list)
@@ -378,65 +432,30 @@ class RepoMap:
         else:
             showing_bar = False
 
-        for fname in fnames:
-            if self.verbose:
-                self.io.tool_output(f"Processing {fname}")
-            if progress and not showing_bar:
-                progress(f"{UPDATING_REPO_MAP_MESSAGE}: {fname}")
+        # Parallel processing for large file sets
+        if len(fnames) > 50:
+            max_workers = min(multiprocessing.cpu_count(), 8)
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_fname = {
+                    executor.submit(self._process_file_for_tags, fname, chat_fnames, mentioned_fnames, mentioned_idents, personalize): fname
+                    for fname in fnames
+                }
 
-            try:
-                file_ok = Path(fname).is_file()
-            except OSError:
-                file_ok = False
-
-            if not file_ok:
-                if fname not in self.warned_files:
-                    self.io.tool_warning(f"Repo-map can't include {fname}")
-                    self.io.tool_output(
-                        "Has it been deleted from the file system but not from git?"
-                    )
-                    self.warned_files.add(fname)
-                continue
-
-            # dump(fname)
-            rel_fname = self.get_rel_fname(fname)
-            current_pers = 0.0  # Start with 0 personalization score
-
-            if fname in chat_fnames:
-                current_pers += personalize
-                chat_rel_fnames.add(rel_fname)
-
-            if rel_fname in mentioned_fnames:
-                # Use max to avoid double counting if in chat_fnames and mentioned_fnames
-                current_pers = max(current_pers, personalize)
-
-            # Check path components against mentioned_idents
-            path_obj = Path(rel_fname)
-            path_components = set(path_obj.parts)
-            basename_with_ext = path_obj.name
-            basename_without_ext, _ = os.path.splitext(basename_with_ext)
-            components_to_check = path_components.union({basename_with_ext, basename_without_ext})
-
-            matched_idents = components_to_check.intersection(mentioned_idents)
-            if matched_idents:
-                # Add personalization *once* if any path component matches a mentioned ident
-                current_pers += personalize
-
-            if current_pers > 0:
-                personalization[rel_fname] = current_pers  # Assign the final calculated value
-
-            tags = list(self.get_tags(fname, rel_fname))
-            if tags is None:
-                continue
-
-            for tag in tags:
-                if tag.kind == "def":
-                    defines[tag.name].add(rel_fname)
-                    key = (rel_fname, tag.name)
-                    definitions[key].add(tag)
-
-                elif tag.kind == "ref":
-                    references[tag.name].append(rel_fname)
+                for future in as_completed(future_to_fname):
+                    fname = future_to_fname[future]
+                    try:
+                        file_data = future.result()
+                        if file_data:
+                            self._merge_file_data(file_data, defines, references, definitions, personalization, chat_rel_fnames)
+                    except Exception as exc:
+                        if self.verbose:
+                            self.io.tool_warning(f"File {fname} generated an exception: {exc}")
+        else:
+            # Sequential processing for small file sets
+            for fname in fnames:
+                file_data = self._process_file_for_tags(fname, chat_fnames, mentioned_fnames, mentioned_idents, personalize)
+                if file_data:
+                    self._merge_file_data(file_data, defines, references, definitions, personalization, chat_rel_fnames)
 
         ##
         # dump(defines)
@@ -553,6 +572,152 @@ class RepoMap:
 
         return ranked_tags
 
+    def find_optimal_tags(self, ranked_tags, max_tokens, chat_rel_fnames, tolerance=0.15):
+        """Find optimal number of tags using smart binary search with caching."""
+        if not ranked_tags:
+            return "", 0
+
+        num_tags = len(ranked_tags)
+        lower_bound = 0
+        upper_bound = num_tags
+        best_content = ""
+        best_tokens = 0
+
+        # Start with a reasonable estimate
+        middle = min(max_tokens // 25, num_tags)
+
+        # Track search history for pattern detection
+        search_history = []
+
+        while lower_bound <= upper_bound:
+            # Create cache key for this slice
+            cache_key = (id(ranked_tags), middle, id(chat_rel_fnames))
+
+            # Check if we have cached result
+            if cache_key in self.binary_search_cache:
+                tree, num_tokens = self.binary_search_cache[cache_key]
+            else:
+                # Generate content and count tokens
+                tree = self.to_tree(ranked_tags[:middle], chat_rel_fnames)
+                num_tokens = self.optimized_token_count(tree)
+
+                # Cache the result (limit cache size)
+                if len(self.binary_search_cache) > 100:
+                    # Remove oldest entries
+                    oldest_keys = list(self.binary_search_cache.keys())[:20]
+                    for key in oldest_keys:
+                        del self.binary_search_cache[key]
+
+                self.binary_search_cache[cache_key] = (tree, num_tokens)
+
+            search_history.append((middle, num_tokens))
+
+            # Calculate error percentage
+            error_pct = abs(num_tokens - max_tokens) / max_tokens if max_tokens > 0 else 1.0
+
+            # Update best result if this is better
+            if (num_tokens <= max_tokens and num_tokens > best_tokens) or error_pct < tolerance:
+                best_content = tree
+                best_tokens = num_tokens
+
+                if error_pct < tolerance:
+                    break
+
+            # Adaptive step size based on search history
+            if len(search_history) >= 3:
+                # Check if we're oscillating
+                recent_middles = [h[0] for h in search_history[-3:]]
+                if len(set(recent_middles)) <= 2:
+                    # We're oscillating, use smaller steps
+                    step = max(1, (upper_bound - lower_bound) // 4)
+                else:
+                    step = (upper_bound - lower_bound) // 2
+            else:
+                step = (upper_bound - lower_bound) // 2
+
+            # Adjust bounds
+            if num_tokens < max_tokens:
+                lower_bound = middle + 1
+            else:
+                upper_bound = middle - 1
+
+            middle = lower_bound + step
+
+            # Prevent infinite loops
+            if step == 0:
+                break
+
+        return best_content, best_tokens
+
+    def _process_file_for_tags(self, fname, chat_fnames, mentioned_fnames, mentioned_idents, personalize):
+        """Process a single file and return its tag data for parallel processing."""
+        if self.verbose:
+            self.io.tool_output(f"Processing {fname}")
+
+        try:
+            file_ok = Path(fname).is_file()
+        except OSError:
+            file_ok = False
+
+        if not file_ok:
+            if fname not in self.warned_files:
+                self.io.tool_warning(f"Repo-map can't include {fname}")
+                self.io.tool_output(
+                    "Has it been deleted from the file system but not from git?"
+                )
+                self.warned_files.add(fname)
+            return None
+
+        rel_fname = self.get_rel_fname(fname)
+        current_pers = 0.0
+
+        if fname in chat_fnames:
+            current_pers += personalize
+
+        if rel_fname in mentioned_fnames:
+            current_pers = max(current_pers, personalize)
+
+        # Check path components against mentioned_idents
+        path_obj = Path(rel_fname)
+        path_components = set(path_obj.parts)
+        basename_with_ext = path_obj.name
+        basename_without_ext, _ = os.path.splitext(basename_with_ext)
+        components_to_check = path_components.union({basename_with_ext, basename_without_ext})
+
+        matched_idents = components_to_check.intersection(mentioned_idents)
+        if matched_idents:
+            current_pers += personalize
+
+        tags = list(self.get_tags(fname, rel_fname))
+        if tags is None:
+            return None
+
+        return {
+            'fname': fname,
+            'rel_fname': rel_fname,
+            'current_pers': current_pers,
+            'tags': tags,
+            'in_chat': fname in chat_fnames
+        }
+
+    def _merge_file_data(self, file_data, defines, references, definitions, personalization, chat_rel_fnames):
+        """Merge processed file data into the main data structures."""
+        rel_fname = file_data['rel_fname']
+
+        if file_data['current_pers'] > 0:
+            personalization[rel_fname] = file_data['current_pers']
+
+        if file_data['in_chat']:
+            chat_rel_fnames.add(rel_fname)
+
+        for tag in file_data['tags']:
+            if tag.kind == "def":
+                defines[tag.name].add(rel_fname)
+                key = (rel_fname, tag.name)
+                definitions[key].add(tag)
+            elif tag.kind == "ref":
+                references[tag.name].append(rel_fname)
+
     def get_ranked_tags_map(
         self,
         chat_fnames,
@@ -643,44 +808,51 @@ class RepoMap:
 
         spin.step()
 
-        num_tags = len(ranked_tags)
-        lower_bound = 0
-        upper_bound = num_tags
-        best_tree = None
-        best_tree_tokens = 0
-
         chat_rel_fnames = set(self.get_rel_fname(fname) for fname in chat_fnames)
 
         self.tree_cache = dict()
 
-        middle = min(int(max_map_tokens // 25), num_tags)
-        while lower_bound <= upper_bound:
-            # dump(lower_bound, middle, upper_bound)
+        # Use optimized binary search if enabled, otherwise fall back to original
+        if self.enable_optimized_search:
+            spin.step("Finding optimal token usage...")
+            best_tree, best_tokens = self.find_optimal_tags(ranked_tags, max_map_tokens, chat_rel_fnames)
 
-            if middle > 1500:
-                show_tokens = f"{middle / 1000.0:.1f}K"
-            else:
-                show_tokens = str(middle)
-            spin.step(f"{UPDATING_REPO_MAP_MESSAGE}: {show_tokens} tokens")
+            if self.verbose and best_tokens > 0:
+                spin.step(f"Optimized to {best_tokens} tokens")
+        else:
+            # Original binary search implementation
+            num_tags = len(ranked_tags)
+            lower_bound = 0
+            upper_bound = num_tags
+            best_tree = None
+            best_tree_tokens = 0
 
-            tree = self.to_tree(ranked_tags[:middle], chat_rel_fnames)
-            num_tokens = self.token_count(tree)
+            middle = min(int(max_map_tokens // 25), num_tags)
+            while lower_bound <= upper_bound:
+                if middle > 1500:
+                    show_tokens = f"{middle / 1000.0:.1f}K"
+                else:
+                    show_tokens = str(middle)
+                spin.step(f"{UPDATING_REPO_MAP_MESSAGE}: {show_tokens} tokens")
 
-            pct_err = abs(num_tokens - max_map_tokens) / max_map_tokens
-            ok_err = 0.15
-            if (num_tokens <= max_map_tokens and num_tokens > best_tree_tokens) or pct_err < ok_err:
-                best_tree = tree
-                best_tree_tokens = num_tokens
+                tree = self.to_tree(ranked_tags[:middle], chat_rel_fnames)
+                num_tokens = self.token_count(tree)
 
-                if pct_err < ok_err:
-                    break
+                pct_err = abs(num_tokens - max_map_tokens) / max_map_tokens
+                ok_err = 0.15
+                if (num_tokens <= max_map_tokens and num_tokens > best_tree_tokens) or pct_err < ok_err:
+                    best_tree = tree
+                    best_tree_tokens = num_tokens
 
-            if num_tokens < max_map_tokens:
-                lower_bound = middle + 1
-            else:
-                upper_bound = middle - 1
+                    if pct_err < ok_err:
+                        break
 
-            middle = int((lower_bound + upper_bound) // 2)
+                if num_tokens < max_map_tokens:
+                    lower_bound = middle + 1
+                else:
+                    upper_bound = middle - 1
+
+                middle = int((lower_bound + upper_bound) // 2)
 
         spin.end()
         return best_tree
