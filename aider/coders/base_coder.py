@@ -1393,20 +1393,82 @@ class Coder:
 
         return chunks
 
+    # ----------  SMART CONTEXT TRIM HELPERS  ----------
+
+    def _file_relevance(self, rel_fname: str, query: str) -> float:
+        """
+        Compute a cheap relevance score for a file with respect to the current
+        query. Higher score ⇒ keep.
+        Heuristics:
+          +100  exact relative-path mention
+          +50   basename/identifier overlap
+          −size_penalty  (≈1 point per 70 tokens, capped at 30)
+        """
+        score = 0
+        if rel_fname in query:
+            score += 100
+
+        idents = self.get_ident_mentions(query)
+        if os.path.basename(rel_fname) in idents:
+            score += 50
+
+        abs_fname = self.abs_root_path(rel_fname)
+        content = self.io.read_text(abs_fname, silent=True) or ""
+        tok = self.main_model.token_count(content)
+        score -= min(tok / 70, 30)  # penalise big files
+
+        return max(score, 0)
+
     def ensure_token_limit(self, chunks):
-        """Ensure the chat fits model limits by auto-dropping files if enabled."""
+        """
+        Proactively (soft-limit) and reactively (hard-limit) trim chat context
+        when --auto-context is enabled.
+        """
         max_tokens = self.main_model.info.get("max_input_tokens") or 0
         if not max_tokens:
             return chunks
 
-        total_tokens = self.main_model.token_count(chunks.all_messages())
-        if total_tokens <= max_tokens:
-            return chunks
+        soft_limit = int(max_tokens * 0.85)  # keep 15 % head-room
+        token_count = self.main_model.token_count
+        current_tokens = token_count(chunks.all_messages())
 
-        # Try to shrink by removing files
-        if self.try_auto_drop_files(total_tokens - max_tokens):
-            # Rebuild chunks after dropping
-            chunks = self.format_chat_chunks()
+        # -------- PROACTIVE RELEVANCE DROP --------
+        if current_tokens > soft_limit:
+            recent = self.cur_messages[-1]["content"] if self.cur_messages else ""
+            scored = [
+                (self._file_relevance(f, recent), f)
+                for f in self.get_inchat_relative_files()
+                if self.abs_root_path(f) not in self.abs_read_only_fnames
+            ]
+            scored.sort()  # lowest scores first (least important)
+
+            for score, rel_fname in scored:
+                if current_tokens <= soft_limit:
+                    break
+                if self.drop_rel_fname(rel_fname):
+                    file_content = self.io.read_text(
+                        self.abs_root_path(rel_fname), silent=True
+                    ) or ""
+                    current_tokens -= token_count(file_content)
+                    self.io.tool_output(
+                        f"Auto-dropping {rel_fname} (score {score:.1f}) to save tokens."
+                    )
+                    # leave breadcrumb so LLM knows it was removed
+                    self.done_messages.append(
+                        dict(
+                            role="user",
+                            content=f"(auto-context) removed {rel_fname} to save tokens.",
+                        )
+                    )
+                    chunks = self.format_chat_chunks()  # rebuild after each drop
+
+        # -------- REACTIVE SAFETY NET (legacy) --------
+        if token_count(chunks.all_messages()) > max_tokens:
+            if self.try_auto_drop_files(
+                token_count(chunks.all_messages()) - max_tokens
+            ):
+                chunks = self.format_chat_chunks()
+
         return chunks
 
     def try_auto_drop_files(self, overage_tokens):
