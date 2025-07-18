@@ -336,6 +336,7 @@ class Coder:
         total_tokens_received=0,
         file_watcher=None,
         auto_copy_context=False,
+        auto_context=False,
         auto_accept_architect=True,
     ):
         # Fill in a dummy Analytics if needed, but it is never .enable()'d
@@ -351,6 +352,7 @@ class Coder:
 
         self.auto_copy_context = auto_copy_context
         self.auto_accept_architect = auto_accept_architect
+        self.auto_context = auto_context
 
         self.ignore_mentions = ignore_mentions
         if not self.ignore_mentions:
@@ -1391,6 +1393,58 @@ class Coder:
 
         return chunks
 
+    def ensure_token_limit(self, chunks):
+        """Ensure the chat fits model limits by auto-dropping files if enabled."""
+        max_tokens = self.main_model.info.get("max_input_tokens") or 0
+        if not max_tokens:
+            return chunks
+
+        total_tokens = self.main_model.token_count(chunks.all_messages())
+        if total_tokens <= max_tokens:
+            return chunks
+
+        # Try to shrink by removing files
+        if self.try_auto_drop_files(total_tokens - max_tokens):
+            # Rebuild chunks after dropping
+            chunks = self.format_chat_chunks()
+        return chunks
+
+    def try_auto_drop_files(self, overage_tokens):
+        """
+        Drop least-relevant in-chat files until the token overage is cleared.
+        Returns True if any file was removed.
+        """
+        # Determine which files were mentioned in the most recent user message
+        recent_msg = self.cur_messages[-1]["content"] if self.cur_messages else ""
+        mentioned = self.get_file_mentions(recent_msg, ignore_current=True)
+
+        candidates = []
+        for rel_fname in self.get_inchat_relative_files():
+            # Keep recently-mentioned or read-only files
+            abs_fname = self.abs_root_path(rel_fname)
+            if rel_fname in mentioned or abs_fname in self.abs_read_only_fnames:
+                continue
+
+            content = self.io.read_text(abs_fname, silent=True)
+            if content is None:
+                continue
+            tokens = self.main_model.token_count(content)
+            candidates.append((tokens, rel_fname))
+
+        # Largest token contributors first
+        candidates.sort(reverse=True)
+
+        removed_any = False
+        for tokens, rel_fname in candidates:
+            if overage_tokens <= 0:
+                break
+            if self.drop_rel_fname(rel_fname):
+                overage_tokens -= tokens
+                removed_any = True
+                self.io.tool_output(f"Auto-dropping {rel_fname} to fit token limit.")
+
+        return removed_any
+
     def check_tokens(self, messages):
         """Check if the messages will fit within the model's token limits."""
         input_tokens = self.main_model.token_count(messages)
@@ -1425,6 +1479,8 @@ class Coder:
         ]
 
         chunks = self.format_messages()
+        if self.auto_context:
+            chunks = self.ensure_token_limit(chunks)
         messages = chunks.all_messages()
         if not self.check_tokens(messages):
             return
