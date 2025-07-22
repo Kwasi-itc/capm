@@ -349,6 +349,8 @@ class Coder:
         self.aider_commit_hashes = set()
         self.rejected_urls = set()
         self.abs_root_path_cache = {}
+        # Cache: repo-level importance weight per file (rebuilt each message)
+        self._repo_rank: dict[str, float] = {}
 
         self.auto_copy_context = auto_copy_context
         self.auto_accept_architect = auto_accept_architect
@@ -1397,33 +1399,65 @@ class Coder:
 
     def _file_relevance(self, rel_fname: str, query: str) -> float:
         """
-        Compute a cheap relevance score for a file with respect to the current
-        query. Higher score ⇒ keep.
-        Heuristics:
-          +100  exact relative-path mention
-          +50   basename/identifier overlap
-          −size_penalty  (≈1 point per 70 tokens, capped at 30)
+        Compute a relevance score for --auto-context trimming.
+
+        Components (higher ⇒ more important to KEEP):
+          +100  exact relative-path mention in the last user message
+           +50  basename / identifier overlap
+         +0-100 RepoMap PageRank importance (scaled 0–100)
+          −P    size penalty  (≈1 pt per 70 tokens, capped at 30)
         """
-        score = 0
+        score = 0.0
+
+        # Mention heuristics
         if rel_fname in query:
             score += 100
-
         idents = self.get_ident_mentions(query)
         if os.path.basename(rel_fname) in idents:
             score += 50
 
-        abs_fname = self.abs_root_path(rel_fname)
-        content = self.io.read_text(abs_fname, silent=True) or ""
-        tok = self.main_model.token_count(content)
-        score -= min(tok / 70, 30)  # penalise big files
+        # Global importance from RepoMap
+        score += 100 * self._repo_rank.get(rel_fname, 0.0)
 
-        return max(score, 0)
+        # Size penalty
+        abs_fname = self.abs_root_path(rel_fname)
+        tok = self.main_model.token_count(self.io.read_text(abs_fname, silent=True) or "")
+        score -= min(tok / 70, 30)
+
+        return max(score, 0.0)
+
+    # -----------------------------------------------------------
+    def _build_repo_rank(self):
+        """
+        Build/refresh a mapping of rel_fname → normalised importance (0–1)
+        using the ordering produced by RepoMap.  Called once per message when
+        --auto-context is enabled.
+        """
+        if not getattr(self, "repo_map", None):
+            self._repo_rank = {}
+            return
+
+        ranked = self.repo_map.get_ranked_tags_map(
+            chat_fnames=set(self.abs_fnames),
+            other_fnames=self.get_all_abs_files(),
+            max_map_tokens=0,  # 0 → need ordering only, not repo-map text
+        ) or []
+
+        total = len(ranked) or 1
+        # Earlier items are more important → weight closer to 1.0
+        self._repo_rank = {
+            tag[0]: (total - idx) / total
+            for idx, tag in enumerate(ranked)
+        }
 
     def ensure_token_limit(self, chunks):
         """
         Proactively (soft-limit) and reactively (hard-limit) trim chat context
         when --auto-context is enabled.
         """
+        # Refresh RepoMap-based importance cache for this message
+        self._build_repo_rank()
+
         max_tokens = self.main_model.info.get("max_input_tokens") or 0
         if not max_tokens:
             return chunks
