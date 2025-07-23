@@ -807,7 +807,7 @@ def get_parser(default_config_files, git_root):
         action=argparse.BooleanOptionalAction,
         default=False,
         help=(
-            "Automatically drop less-relevant files from the chat when the estimated token use"
+            "Automatically drop less-relevant files from the chat when the estimated token use and also adds relevant files automatically"
             " exceeds the model limit (default: False)"
         ),
     )

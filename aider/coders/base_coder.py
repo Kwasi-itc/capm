@@ -1427,96 +1427,6 @@ class Coder:
         return max(score, 0.0)
 
     # -----------------------------------------------------------
-    def _build_repo_rank(self):
-        """
-        Build/refresh a mapping of rel_fname → normalised importance (0–1)
-        using the ordering produced by RepoMap.  Called once per message when
-        --auto-context is enabled.
-        """
-        if not getattr(self, "repo_map", None):
-            self._repo_rank = {}
-            return
-
-        ranked = self.repo_map.get_ranked_tags_map(
-            chat_fnames=set(self.abs_fnames),
-            other_fnames=self.get_all_abs_files(),
-            max_map_tokens=0,  # 0 → need ordering only, not repo-map text
-        ) or []
-
-        total = len(ranked) or 1
-        # Earlier items are more important → weight closer to 1.0
-        self._repo_rank = {
-            tag[0]: (total - idx) / total
-            for idx, tag in enumerate(ranked)
-        }
-
-    def ensure_token_limit(self, chunks):
-        """
-        Proactively (soft-limit) and reactively (hard-limit) trim chat context
-        when --auto-context is enabled.
-        """
-        # Refresh RepoMap-based importance cache for this message
-        self._build_repo_rank()
-
-        max_tokens = self.main_model.info.get("max_input_tokens") or 0
-        if not max_tokens:
-            return chunks
-
-        soft_limit = int(max_tokens * 0.85)  # keep 15 % head-room
-        token_count = self.main_model.token_count
-        current_tokens = token_count(chunks.all_messages())
-
-        # -------- PROACTIVE RELEVANCE DROP (disabled) --------
-        if current_tokens > soft_limit:
-            # Auto-context now keeps all files; just warn when we cross the soft limit.
-            self.io.tool_warning(
-                "Token usage exceeds the soft limit, but auto-context file-dropping is disabled."
-            )
-
-        # -------- REACTIVE SAFETY NET (disabled) --------
-        if token_count(chunks.all_messages()) > max_tokens:
-            self.io.tool_warning(
-                "Token usage exceeds the hard limit; auto-context will not drop files automatically."
-            )
-
-        return chunks
-
-    def try_auto_drop_files(self, overage_tokens):
-        """
-        Drop least-relevant in-chat files until the token overage is cleared.
-        Returns True if any file was removed.
-        """
-        # Determine which files were mentioned in the most recent user message
-        recent_msg = self.cur_messages[-1]["content"] if self.cur_messages else ""
-        mentioned = self.get_file_mentions(recent_msg, ignore_current=True)
-
-        candidates = []
-        for rel_fname in self.get_inchat_relative_files():
-            # Keep recently-mentioned or read-only files
-            abs_fname = self.abs_root_path(rel_fname)
-            if rel_fname in mentioned or abs_fname in self.abs_read_only_fnames:
-                continue
-
-            content = self.io.read_text(abs_fname, silent=True)
-            if content is None:
-                continue
-            tokens = self.main_model.token_count(content)
-            candidates.append((tokens, rel_fname))
-
-        # Largest token contributors first
-        candidates.sort(reverse=True)
-
-        removed_any = False
-        for tokens, rel_fname in candidates:
-            if overage_tokens <= 0:
-                break
-            if self.drop_rel_fname(rel_fname):
-                overage_tokens -= tokens
-                removed_any = True
-                self.io.tool_output(f"Auto-dropping {rel_fname} to fit token limit.")
-
-        return removed_any
-
     def check_tokens(self, messages):
         """Check if the messages will fit within the model's token limits."""
         input_tokens = self.main_model.token_count(messages)
@@ -1551,8 +1461,6 @@ class Coder:
         ]
 
         chunks = self.format_messages()
-        if self.auto_context:
-            chunks = self.ensure_token_limit(chunks)
         messages = chunks.all_messages()
         if not self.check_tokens(messages):
             return
@@ -1895,23 +1803,6 @@ class Coder:
         * Without --auto-context → keep the original interactive prompt.
         """
         mentioned_rel_fnames = self.get_file_mentions(content)
-
-        # When auto-context is on, consider top-ranked RepoMap files too
-        if self.auto_context and getattr(self, "repo_map", None):
-            # Ensure ranking cache is populated for this message
-            self._build_repo_rank()
-            inchat = set(self.get_inchat_relative_files())
-            ranked = sorted(
-                (
-                    (score, fname)
-                    for fname, score in self._repo_rank.items()
-                    if fname not in inchat
-                ),
-                reverse=True,
-            )
-            # Take at most three highest-scoring suggestions
-            repomap_suggestions = {fname for _score, fname in ranked[:3]}
-            mentioned_rel_fnames |= repomap_suggestions
 
         new_mentions = mentioned_rel_fnames - self.ignore_mentions
         if not new_mentions:
