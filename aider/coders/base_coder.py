@@ -336,7 +336,7 @@ class Coder:
         total_tokens_received=0,
         file_watcher=None,
         auto_copy_context=False,
-        auto_context=False,
+        auto_context=True,
         auto_accept_architect=True,
     ):
         # Fill in a dummy Analytics if needed, but it is never .enable()'d
