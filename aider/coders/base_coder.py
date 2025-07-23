@@ -1466,42 +1466,18 @@ class Coder:
         token_count = self.main_model.token_count
         current_tokens = token_count(chunks.all_messages())
 
-        # -------- PROACTIVE RELEVANCE DROP --------
+        # -------- PROACTIVE RELEVANCE DROP (disabled) --------
         if current_tokens > soft_limit:
-            recent = self.cur_messages[-1]["content"] if self.cur_messages else ""
-            scored = [
-                (self._file_relevance(f, recent), f)
-                for f in self.get_inchat_relative_files()
-                if self.abs_root_path(f) not in self.abs_read_only_fnames
-            ]
-            scored.sort()  # lowest scores first (least important)
+            # Auto-context now keeps all files; just warn when we cross the soft limit.
+            self.io.tool_warning(
+                "Token usage exceeds the soft limit, but auto-context file-dropping is disabled."
+            )
 
-            for score, rel_fname in scored:
-                if current_tokens <= soft_limit:
-                    break
-                if self.drop_rel_fname(rel_fname):
-                    file_content = self.io.read_text(
-                        self.abs_root_path(rel_fname), silent=True
-                    ) or ""
-                    current_tokens -= token_count(file_content)
-                    self.io.tool_output(
-                        f"Auto-dropping {rel_fname} (score {score:.1f}) to save tokens."
-                    )
-                    # leave breadcrumb so LLM knows it was removed
-                    self.done_messages.append(
-                        dict(
-                            role="user",
-                            content=f"(auto-context) removed {rel_fname} to save tokens.",
-                        )
-                    )
-                    chunks = self.format_chat_chunks()  # rebuild after each drop
-
-        # -------- REACTIVE SAFETY NET (legacy) --------
+        # -------- REACTIVE SAFETY NET (disabled) --------
         if token_count(chunks.all_messages()) > max_tokens:
-            if self.try_auto_drop_files(
-                token_count(chunks.all_messages()) - max_tokens
-            ):
-                chunks = self.format_chat_chunks()
+            self.io.tool_warning(
+                "Token usage exceeds the hard limit; auto-context will not drop files automatically."
+            )
 
         return chunks
 
