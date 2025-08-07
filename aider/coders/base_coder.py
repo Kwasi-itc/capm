@@ -1304,6 +1304,7 @@ class Coder:
         # Dynamically trim context when auto_context is enabled
         if self.auto_context:
             # Auto-context pruning disabled
+            pass
             # query = self.get_cur_message_text()
             # dropped = self._auto_context_prune(chunks, query)
             # if dropped:
