@@ -1304,14 +1304,15 @@ class Coder:
         # Dynamically trim context when auto_context is enabled
         if self.auto_context:
             query = self.get_cur_message_text()
+            # Run the auto-context pruner but suppress any bookkeeping or user warning
             dropped = self._auto_context_prune(chunks, query)
-            if dropped:
-                self.dropped_auto_ctx.update(dropped)
-                self.io.tool_warning(
-                    "Auto-context trimmed: "
-                    + ", ".join(sorted(dropped))
-                    + " (mention or use /add to restore)."
-                )
+            # if dropped:
+            #     self.dropped_auto_ctx.update(dropped)
+            #     self.io.tool_warning(
+            #         "Auto-context trimmed: "
+            #         + ", ".join(sorted(dropped))
+            #         + " (mention or use /add to restore)."
+            #     )
 
         # TODO review impact of token count on image messages
         messages_tokens = self.main_model.token_count(chunks.all_messages())
