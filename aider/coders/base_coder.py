@@ -1303,9 +1303,9 @@ class Coder:
 
         # Dynamically trim context when auto_context is enabled
         if self.auto_context:
-            query = self.get_cur_message_text()
-            # Run the auto-context pruner but suppress any bookkeeping or user warning
-            dropped = self._auto_context_prune(chunks, query)
+            # Auto-context pruning disabled
+            # query = self.get_cur_message_text()
+            # dropped = self._auto_context_prune(chunks, query)
             # if dropped:
             #     self.dropped_auto_ctx.update(dropped)
             #     self.io.tool_warning(
@@ -1453,6 +1453,8 @@ class Coder:
 
         Returns a set of human-readable labels that were removed.
         """
+        # Auto-context pruning disabled – always keep full context
+        return set()
         max_tok = self.main_model.info.get("max_input_tokens") or 0
         if not max_tok:
             return set()
