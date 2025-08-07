@@ -1466,7 +1466,11 @@ class Coder:
         for idx, msg in enumerate(list(chunks.chat_files)):
             if msg.get("role") != "user":
                 continue
-            rel_fname = msg["content"].splitlines()[0]
+            content = msg.get("content")
+            # Skip non-string content such as the list structure used for images/PDFs
+            if not isinstance(content, str):
+                continue
+            rel_fname = content.splitlines()[0]
             score = self._file_relevance(rel_fname, query)
             tok = self.main_model.token_count(msg)
             candidates.append(("file", idx, score, tok, rel_fname))
