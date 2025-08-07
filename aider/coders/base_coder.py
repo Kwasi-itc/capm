@@ -120,6 +120,9 @@ class Coder:
     chat_language = None
     commit_language = None
     file_watcher = None
+    # Tracks files and other context elements automatically dropped to stay within
+    # the model's token budget for the current Coder session.
+    dropped_auto_ctx = set()
 
     @classmethod
     def create(
@@ -355,6 +358,8 @@ class Coder:
         self.auto_copy_context = auto_copy_context
         self.auto_accept_architect = auto_accept_architect
         self.auto_context = auto_context
+        # Reset tracker each new coder instance
+        self.dropped_auto_ctx = set()
 
         self.ignore_mentions = ignore_mentions
         if not self.ignore_mentions:
@@ -1296,6 +1301,18 @@ class Coder:
         chunks.cur = list(self.cur_messages)
         chunks.reminder = []
 
+        # Dynamically trim context when auto_context is enabled
+        if self.auto_context:
+            query = self.get_cur_message_text()
+            dropped = self._auto_context_prune(chunks, query)
+            if dropped:
+                self.dropped_auto_ctx.update(dropped)
+                self.io.tool_warning(
+                    "Auto-context trimmed: "
+                    + ", ".join(sorted(dropped))
+                    + " (mention or use /add to restore)."
+                )
+
         # TODO review impact of token count on image messages
         messages_tokens = self.main_model.token_count(chunks.all_messages())
         reminder_tokens = self.main_model.token_count(reminder_message)
@@ -2220,7 +2237,9 @@ class Coder:
         all_files = set(self.get_all_relative_files())
         inchat_files = set(self.get_inchat_relative_files())
         read_only_files = set(self.get_rel_fname(fname) for fname in self.abs_read_only_fnames)
-        return all_files - inchat_files - read_only_files
+        # Avoid immediately re-adding files that were auto-dropped, unless user mentions them again
+        dropped_files = {f for f in self.dropped_auto_ctx if not f.startswith("<")}
+        return all_files - inchat_files - read_only_files - dropped_files
 
     def check_for_dirty_commit(self, path):
         if not self.repo:
