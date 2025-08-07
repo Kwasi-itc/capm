@@ -1143,9 +1143,7 @@ class Coder:
         shell_val = os.getenv(shell_var)
         platform_text += f"- Shell: {shell_var}={shell_val}\n"
 
-        user_lang = self.get_user_language()
-        if user_lang:
-            platform_text += f"- Language: {user_lang}\n"
+        platform_text += f"- Language: English\n"
 
         dt = datetime.now().astimezone().strftime("%Y-%m-%d")
         platform_text += f"- Current date: {dt}\n"
@@ -1184,10 +1182,8 @@ class Coder:
             final_reminders.append(self.gpt_prompts.lazy_prompt)
         if self.main_model.overeager:
             final_reminders.append(self.gpt_prompts.overeager_prompt)
-
-        user_lang = self.get_user_language()
-        if user_lang:
-            final_reminders.append(f"Reply in {user_lang}.\n")
+        
+        final_reminders.append("Reply in English.\n")
 
         platform_text = self.get_platform_info()
 
@@ -1202,10 +1198,6 @@ class Coder:
             )
             rename_with_shell = ""
 
-        if user_lang:  # user_lang is the result of self.get_user_language()
-            language = user_lang
-        else:
-            language = "the same language they are using"  # Default if no specific lang detected
 
         if self.fence[0] == "`" * 4:
             quad_backtick_reminder = (
