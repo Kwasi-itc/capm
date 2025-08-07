@@ -1301,19 +1301,6 @@ class Coder:
         chunks.cur = list(self.cur_messages)
         chunks.reminder = []
 
-        # Dynamically trim context when auto_context is enabled
-        if self.auto_context:
-            # Auto-context pruning disabled
-            pass
-            # query = self.get_cur_message_text()
-            # dropped = self._auto_context_prune(chunks, query)
-            # if dropped:
-            #     self.dropped_auto_ctx.update(dropped)
-            #     self.io.tool_warning(
-            #         "Auto-context trimmed: "
-            #         + ", ".join(sorted(dropped))
-            #         + " (mention or use /add to restore)."
-            #     )
 
         # TODO review impact of token count on image messages
         messages_tokens = self.main_model.token_count(chunks.all_messages())
@@ -1414,104 +1401,8 @@ class Coder:
 
         return chunks
 
-    # ----------  SMART CONTEXT TRIM HELPERS  ----------
 
-    def _file_relevance(self, rel_fname: str, query: str) -> float:
-        """
-        Compute a relevance score for --auto-context trimming.
 
-        Components (higher ⇒ more important to KEEP):
-          +100  exact relative-path mention in the last user message
-           +50  basename / identifier overlap
-         +0-100 RepoMap PageRank importance (scaled 0–100)
-          −P    size penalty  (≈1 pt per 70 tokens, capped at 30)
-        """
-        score = 0.0
-
-        # Mention heuristics
-        if rel_fname in query:
-            score += 100
-        idents = self.get_ident_mentions(query)
-        if os.path.basename(rel_fname) in idents:
-            score += 50
-
-        # Global importance from RepoMap
-        score += 100 * self._repo_rank.get(rel_fname, 0.0)
-
-        # Size penalty
-        abs_fname = self.abs_root_path(rel_fname)
-        tok = self.main_model.token_count(self.io.read_text(abs_fname, silent=True) or "")
-        score -= min(tok / 70, 30)
-
-        return max(score, 0.0)
-
-    # ----------  SMART AUTO-CONTEXT PRUNER  ----------
-    def _auto_context_prune(self, chunks, query):
-        """
-        Drop the least-important context pieces (repo-map, old history,
-        low-relevance files) until the total fits ≤90 % of the model
-        input window.
-
-        Returns a set of human-readable labels that were removed.
-        """
-        # Auto-context pruning disabled – always keep full context
-        return set()
-        max_tok = self.main_model.info.get("max_input_tokens") or 0
-        if not max_tok:
-            return set()
-
-        total = self.main_model.token_count(chunks.all_messages())
-        if total <= 0.9 * max_tok:
-            return set()
-
-        candidates = []
-
-        # a) full files already in chat
-        for idx, msg in enumerate(list(chunks.chat_files)):
-            if msg.get("role") != "user":
-                continue
-            content = msg.get("content")
-            # Skip non-string content such as the list structure used for images/PDFs
-            if not isinstance(content, str):
-                continue
-            rel_fname = content.splitlines()[0]
-            score = self._file_relevance(rel_fname, query)
-            tok = self.main_model.token_count(msg)
-            candidates.append(("file", idx, score, tok, rel_fname))
-
-        # b) repo-map block
-        if chunks.repo:
-            tok = self.main_model.token_count(chunks.repo[0])
-            candidates.append(("repo", 0, -5, tok, "<repo-map>"))
-
-        # c) older done history
-        for idx, msg in enumerate(list(chunks.done)):
-            tok = self.main_model.token_count(msg)
-            candidates.append(("done", idx, -idx, tok, "<history>"))
-
-        # sort by low score then smaller size
-        candidates.sort(key=lambda t: (t[2], t[3]))
-
-        removed = set()
-        for kind, idx, _s, tok, label in candidates:
-            if total <= 0.9 * max_tok:
-                break
-
-            if kind == "file":
-                # remove file message plus its assistant ack
-                del chunks.chat_files[idx : idx + 2]
-                self.abs_fnames.discard(self.abs_root_path(label))
-            elif kind == "repo":
-                chunks.repo.clear()
-            elif kind == "done":
-                del chunks.done[idx]
-
-            total -= tok
-            removed.add(label)
-
-        return removed
-
-    # -----------------------------------------------------------
     def check_tokens(self, messages):
         """Check if the messages will fit within the model's token limits."""
         input_tokens = self.main_model.token_count(messages)
