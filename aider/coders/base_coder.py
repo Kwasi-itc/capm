@@ -1443,6 +1443,66 @@ class Coder:
 
         return max(score, 0.0)
 
+    # ----------  SMART AUTO-CONTEXT PRUNER  ----------
+    def _auto_context_prune(self, chunks, query):
+        """
+        Drop the least-important context pieces (repo-map, old history,
+        low-relevance files) until the total fits ≤90 % of the model
+        input window.
+
+        Returns a set of human-readable labels that were removed.
+        """
+        max_tok = self.main_model.info.get("max_input_tokens") or 0
+        if not max_tok:
+            return set()
+
+        total = self.main_model.token_count(chunks.all_messages())
+        if total <= 0.9 * max_tok:
+            return set()
+
+        candidates = []
+
+        # a) full files already in chat
+        for idx, msg in enumerate(list(chunks.chat_files)):
+            if msg.get("role") != "user":
+                continue
+            rel_fname = msg["content"].splitlines()[0]
+            score = self._file_relevance(rel_fname, query)
+            tok = self.main_model.token_count(msg)
+            candidates.append(("file", idx, score, tok, rel_fname))
+
+        # b) repo-map block
+        if chunks.repo:
+            tok = self.main_model.token_count(chunks.repo[0])
+            candidates.append(("repo", 0, -5, tok, "<repo-map>"))
+
+        # c) older done history
+        for idx, msg in enumerate(list(chunks.done)):
+            tok = self.main_model.token_count(msg)
+            candidates.append(("done", idx, -idx, tok, "<history>"))
+
+        # sort by low score then smaller size
+        candidates.sort(key=lambda t: (t[2], t[3]))
+
+        removed = set()
+        for kind, idx, _s, tok, label in candidates:
+            if total <= 0.9 * max_tok:
+                break
+
+            if kind == "file":
+                # remove file message plus its assistant ack
+                del chunks.chat_files[idx : idx + 2]
+                self.abs_fnames.discard(self.abs_root_path(label))
+            elif kind == "repo":
+                chunks.repo.clear()
+            elif kind == "done":
+                del chunks.done[idx]
+
+            total -= tok
+            removed.add(label)
+
+        return removed
+
     # -----------------------------------------------------------
     def check_tokens(self, messages):
         """Check if the messages will fit within the model's token limits."""
