@@ -72,6 +72,11 @@ class FileReadTool(BaseTool):
         path = Path(file_path).expanduser().resolve()
         self._validate_path(path)
 
+        # Size guard: refuse huge *text* files unless caller pages via offset/limit
+        if path.suffix.lower() != ".ipynb" and not is_image_file(path):
+            if path.stat().st_size > MAX_OUTPUT_SIZE and offset is None and limit is None:
+                raise ToolError(self._file_too_big(path.stat().st_size))
+
         # Delegate notebooks
         if path.suffix.lower() == ".ipynb":
             raise ToolError("Use the `read_notebook` tool for .ipynb files.")

@@ -38,7 +38,7 @@ def test_offset_limit(tmp_path: Path):
     f = make_text(tmp_path, "b.txt", 50)
     out = FileReadTool().run(file_path=str(f), offset=11, limit=5)
     assert "showing 11-15" in out
-    assert "10\n11\n14" in out
+    assert "10\n11\n12\n13\n14" in out
 
 
 def test_large_file_requires_paging(tmp_path: Path):
