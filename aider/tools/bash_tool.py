@@ -139,7 +139,9 @@ class BashTool(BaseTool):
             if cmd_fixed.lower().startswith("python -c '") and cmd_fixed.endswith("'"):
                 head, code = cmd_fixed.split(" -c ", 1)
                 code = code[1:-1]  # strip outer single quotes
-                cmd_fixed = f'{head} -c "{code.replace(chr(34), r"\\"")}"'
+                # Escape any embedded double-quotes so they survive cmd.exe
+                code_escaped = code.replace('"', r'\"')
+                cmd_fixed = f'{head} -c "{code_escaped}"'
 
             long_python_inline = (
                 cmd_fixed.lower().startswith("python -c")
