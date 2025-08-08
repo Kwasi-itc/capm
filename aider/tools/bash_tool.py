@@ -15,6 +15,8 @@ import shlex
 import subprocess
 import textwrap
 import time
+import shutil
+import platform
 from pathlib import Path
 from typing import Any, Dict
 
@@ -121,11 +123,27 @@ class BashTool(BaseTool):
 
         workdir = BashTool._session_cwd or Path.cwd()
 
+        # ----- choose shell program -----
+        bash_exe = shutil.which("bash")
+        if bash_exe:
+            cmd_list = [bash_exe, "-lc", cmd]
+        else:
+            if platform.system() != "Windows":
+                raise ToolError("`bash` executable not found on this system")
+            # --- Windows fallback using cmd.exe ------------------------
+            cmd_fixed = cmd
+            #   Convert `python -c 'code'` → python -c "code"
+            if cmd_fixed.lower().startswith("python -c '") and cmd_fixed.endswith("'"):
+                head, code = cmd_fixed.split(" -c ", 1)
+                code = code[1:-1].replace('"', r'\"')  # strip outer single quotes
+                cmd_fixed = f'{head} -c "{code}"'
+            cmd_list = ["cmd", "/c", cmd_fixed]
+
         # ----- execute -----
         start = time.time()
         try:
             proc = subprocess.run(
-                ["bash", "-lc", cmd],
+                cmd_list,
                 cwd=workdir,
                 capture_output=True,
                 text=True,
