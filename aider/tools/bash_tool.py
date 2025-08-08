@@ -17,6 +17,8 @@ import textwrap
 import time
 import shutil
 import platform
+import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Dict
 
@@ -130,14 +132,38 @@ class BashTool(BaseTool):
         else:
             if platform.system() != "Windows":
                 raise ToolError("`bash` executable not found on this system")
-            # --- Windows fallback using cmd.exe ------------------------
+            # --- Windows fallback ------------------------------------
             cmd_fixed = cmd
-            #   Convert `python -c 'code'` → python -c "code"
+
+            # Convert `python -c 'code'` → python -c "code"
             if cmd_fixed.lower().startswith("python -c '") and cmd_fixed.endswith("'"):
                 head, code = cmd_fixed.split(" -c ", 1)
-                code = code[1:-1].replace('"', r'\"')  # strip outer single quotes
-                cmd_fixed = f'{head} -c "{code}"'
-            cmd_list = ["cmd", "/c", cmd_fixed]
+                code = code[1:-1]  # strip outer single quotes
+                cmd_fixed = f'{head} -c "{code.replace(chr(34), r"\\"")}"'
+
+            long_python_inline = (
+                cmd_fixed.lower().startswith("python -c")
+                and len(cmd_fixed) > 7500
+            )
+
+            if long_python_inline:
+                # Spill code to a temporary file to avoid 8 k cmd.exe limit
+                try:
+                    _, _, py_code = shlex.split(cmd_fixed, posix=True)
+                except Exception:  # noqa: BLE001
+                    py_code = None
+
+                if py_code:
+                    tmp = tempfile.NamedTemporaryFile(
+                        delete=False, suffix=".py", mode="w", encoding="utf-8"
+                    )
+                    tmp.write(py_code)
+                    tmp.close()
+                    cmd_list = [sys.executable, tmp.name]
+                else:
+                    cmd_list = ["cmd", "/c", cmd_fixed]
+            else:
+                cmd_list = ["cmd", "/c", cmd_fixed]
 
         # ----- execute -----
         start = time.time()
@@ -149,6 +175,9 @@ class BashTool(BaseTool):
                 text=True,
                 timeout=timeout_s,
             )
+            # Non-zero exit status → error (helps Windows tests)
+            if proc.returncode != 0:
+                raise ToolError(f"Command exited with status {proc.returncode}")
         except subprocess.TimeoutExpired:
             raise ToolError(f"Command timed out after {timeout_ms} ms") from None
         except Exception as exc:  # noqa: BLE001
