@@ -98,6 +98,16 @@ class FileReadTool(BaseTool):
         if not has_read_permission(path):
             raise ToolError(f"Read permission denied for {path}")
 
+    @staticmethod
+    def _file_too_big(size_bytes: int) -> str:
+        """Return a user-friendly message for oversized text files."""
+        kb = size_bytes // 1024
+        max_kb = MAX_OUTPUT_SIZE // 1024
+        return (
+            f"File content ({kb} KB) exceeds {max_kb} KB. "
+            "Use offset/limit or grep to fetch specific parts of the file instead."
+        )
+
     # ------------- text helpers ------------------------------------------------
     @staticmethod
     def _line_iter(path: Path) -> tuple[List[str], int]:
