@@ -52,22 +52,28 @@ class LsTool(BaseTool):
         return False
 
     @staticmethod
-    def _breadth_first(root: Path) -> List[str]:
+    def _breadth_first(root: Path) -> tuple[List[str], bool]:
         """
-        Return *relative* paths (dirs end with '/'), breadth-first,
-        stopping after MAX_FILES.
+        Return (*relative* paths list, truncated?) breadth-first.
+        Each directory path ends with '/'.
+
+        The `truncated` flag becomes True if the directory tree contained
+        more than ``MAX_FILES`` items and the listing was cut short.
         """
         rel_paths: List[str] = []
         q: deque[Path] = deque([root])
+        truncated = False
 
         while q:
             cur = q.popleft()
 
-            if cur is not root:  # don’t include root itself in listing
-                rel = cur.relative_to(root)
-                rel_paths.append(str(rel) + ("/" if cur.is_dir() else ""))
+            # skip printing the root directory itself
+            if cur is not root:
+                rel = cur.relative_to(root).as_posix()
+                rel_paths.append(f"{rel}/" if cur.is_dir() else rel)
 
             if len(rel_paths) >= MAX_FILES:
+                truncated = True
                 break
 
             if cur.is_dir():
@@ -80,7 +86,7 @@ class LsTool(BaseTool):
                         continue
                     q.append(kid)
 
-        return rel_paths
+        return rel_paths, truncated
 
     @staticmethod
     def _paths_to_tree(paths: List[str]) -> Dict:
@@ -121,9 +127,9 @@ class LsTool(BaseTool):
         if not has_read_permission(root):
             raise ToolError(f"Read permission denied for {root}")
 
-        rel_paths = self._breadth_first(root)
+        rel_paths, truncated = self._breadth_first(root)
         tree_str = f"- {root}/\n" + self._print_tree(self._paths_to_tree(rel_paths))
 
-        if len(rel_paths) > MAX_FILES:
+        if truncated:
             return TRUNCATED_MSG + tree_str
         return tree_str
