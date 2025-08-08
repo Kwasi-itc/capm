@@ -97,13 +97,13 @@ class GrepTool(BaseTool):
         num_files = len(matches)
 
         summary_lines = matches[:MAX_RESULTS]
-        summary = (
-            f"Found {num_files} file{'s' if num_files != 1 else ''}\n" + "\n".join(summary_lines)
-        )
+
+        # Header on a single line; append truncation notice directly to it
+        header = f"Found {num_files} file{'s' if num_files != 1 else ''}"
         if num_files > MAX_RESULTS:
-            summary += (
-                "\n(Results are truncated. Consider using a more specific path or pattern.)"
-            )
+            header += " (Results are truncated. Consider using a more specific path or pattern.)"
+
+        summary = header + "\n" + "\n".join(summary_lines)
 
         # Optionally you could return structured data; for now we return the assistant-ready string
         return summary
