@@ -48,6 +48,7 @@ from aider.repomap import RepoMap
 from aider.run_cmd import run_cmd
 from aider.utils import format_content, format_messages, format_tokens, is_image_file
 from aider.waiting import WaitingSpinner
+from aider.tools.base_tool import ToolError
 
 from ..dump import dump  # noqa: F401
 from .chat_chunks import ChatChunks
@@ -1544,6 +1545,28 @@ class Coder:
         # dump(self.partial_response_content)
 
         self.io.tool_output()
+
+        # ---------------- execute tool calls if the LLM requested one ----------------
+        if self.partial_response_function_call:
+            fn_name = self.partial_response_function_call.get("name")
+            args_json = self.partial_response_function_call.get("arguments", "{}")
+            tool = self._tools.get(fn_name)
+            if tool:
+                try:
+                    output = tool.handle_call(args_json)
+                    # Feed the tool result back into the dialogue so the model can use it.
+                    self.cur_messages.append(
+                        {"role": "tool", "name": fn_name, "content": output}
+                    )
+                    # Clear the pending call & recursively continue the conversation.
+                    self.partial_response_function_call = {}
+                    self.partial_response_content = ""
+                    yield from self.send_message("")
+                    return
+                except ToolError as e:
+                    self.cur_messages.append(
+                        {"role": "assistant", "content": f"Tool error: {e}"}
+                    )
 
         self.show_usage_report()
 
