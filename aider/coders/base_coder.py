@@ -1217,7 +1217,7 @@ class Coder:
             rename_with_shell=rename_with_shell,
             shell_cmd_reminder=shell_cmd_reminder,
             go_ahead_tip=self.gpt_prompts.go_ahead_tip,
-            language=language,
+            language="English",
         )
 
         return prompt
