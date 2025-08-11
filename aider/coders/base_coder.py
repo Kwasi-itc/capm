@@ -537,6 +537,20 @@ class Coder:
         self.auto_test = auto_test
         self.test_cmd = test_cmd
 
+        # --------------- discover & advertise available tools ---------------
+        # If no tool list has been provided yet, scan aider.tools for every
+        # concrete Tool subclass, instantiate them and expose their JSON
+        # schema so the LLM can decide which one to call.
+        if self.functions is None:
+            from aider.tools import discover_tools  # local import avoids heavy startup cost
+
+            tool_classes = discover_tools()
+            self._tools = {cls.name: cls() for cls in tool_classes}
+            self.functions = [tool.json_schema() for tool in self._tools.values()]
+        else:
+            # Still create a quick-lookup map even when functions were injected
+            self._tools = {f["name"]: None for f in self.functions}
+
         # validate the functions jsonschema
         if self.functions:
             from jsonschema import Draft7Validator
