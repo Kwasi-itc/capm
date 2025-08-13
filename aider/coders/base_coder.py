@@ -692,9 +692,18 @@ class Coder:
         return prompt
 
     def get_cur_message_text(self):
+        """
+        Return the concatenated *text* content of all current messages.
+
+        Some interim messages (for example tool / function-call stubs) have
+        ``content`` set to ``None``.  Safely treat those as empty strings so we
+        don't raise a ``TypeError`` when building the combined string.
+        """
         text = ""
         for msg in self.cur_messages:
-            text += msg["content"] + "\n"
+            content = msg.get("content") or ""
+            if content:
+                text += content + "\n"
         return text
 
     def get_ident_mentions(self, text):
