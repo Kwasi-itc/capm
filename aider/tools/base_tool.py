@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict
 
 import jsonschema
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ToolError(Exception):
@@ -50,7 +53,9 @@ class BaseTool(ABC):
         Validate JSON arguments coming from the LLM and execute `run`.
         Returns the textual result that will be sent back into the chat.
         """
+        # Parse the JSON arguments (the model may return `null` or an empty string)
         args = json.loads(args_json or "{}")
+        logger.debug("Tool %s invoked with args=%s", self.name, args)
 
         try:
             jsonschema.validate(args, self.parameters)
@@ -58,8 +63,11 @@ class BaseTool(ABC):
             raise ToolError(f"Invalid arguments for {self.name}: {exc.message}") from exc
 
         try:
-            return self.run(**args)
+            result = self.run(**args)
+            logger.debug("Tool %s completed successfully", self.name)
+            return result
         except Exception as exc:  # noqa: BLE001
+            logger.exception("Error while running %s", self.name)
             raise ToolError(f"Error while running {self.name}: {exc}") from exc
 
     # -------- concrete tool must implement -----------------------
