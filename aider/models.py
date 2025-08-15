@@ -968,6 +968,18 @@ class Model(ModelSettings):
             kwargs["timeout"] = request_timeout
         if self.verbose:
             dump(kwargs)
+
+        # Sanitize the chat history: OpenAI requires that any message with role "tool"
+        # directly follows an assistant message that contained the matching `tool_calls`.
+        # If we are not sending function/tool definitions (`functions is None`) then we
+        # strip out any stray "tool" messages to avoid:
+        #   Invalid parameter: messages with role 'tool' must be a response to a
+        #   preceeding message with 'tool_calls'.
+        if functions is None and isinstance(messages, list):
+            messages = [
+                m for m in messages if not (isinstance(m, dict) and m.get("role") == "tool")
+            ]
+
         kwargs["messages"] = messages
 
         # Are we using github copilot?
