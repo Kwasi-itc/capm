@@ -969,16 +969,30 @@ class Model(ModelSettings):
         if self.verbose:
             dump(kwargs)
 
-        # Sanitize the chat history: OpenAI requires that any message with role "tool"
-        # directly follows an assistant message that contained the matching `tool_calls`.
-        # If we are not sending function/tool definitions (`functions is None`) then we
-        # strip out any stray "tool" messages to avoid:
-        #   Invalid parameter: messages with role 'tool' must be a response to a
-        #   preceeding message with 'tool_calls'.
-        if functions is None and isinstance(messages, list):
-            messages = [
-                m for m in messages if not (isinstance(m, dict) and m.get("role") == "tool")
-            ]
+        # Sanitize the chat history.  OpenAI requires each `tool` message to appear
+        # immediately after the assistant message whose `tool_calls` it satisfies.
+        # We therefore drop any `tool` message that is not directly preceded by an
+        # assistant message containing `tool_calls`.  This prevents:
+        #   Invalid parameter: messages with role 'tool' must be a response to a preceeding
+        #   message with 'tool_calls'.
+        if isinstance(messages, list):
+            cleaned = []
+            for msg in messages:
+                is_tool = isinstance(msg, dict) and msg.get("role") == "tool"
+                if is_tool:
+                    if (
+                        cleaned
+                        and isinstance(cleaned[-1], dict)
+                        and cleaned[-1].get("role") == "assistant"
+                        and cleaned[-1].get("tool_calls")
+                    ):
+                        cleaned.append(msg)
+                    else:
+                        # Drop stray/invalid tool message
+                        continue
+                else:
+                    cleaned.append(msg)
+            messages = cleaned
 
         kwargs["messages"] = messages
 
