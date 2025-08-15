@@ -970,7 +970,8 @@ class Model(ModelSettings):
             dump(kwargs)
 
         # Sanitize the chat history.  OpenAI requires each `tool` message to appear
-        # immediately after the assistant message whose `tool_calls` it satisfies.
+        # immediately after the assistant message whose `tool_calls` **or**
+        # legacy `function_call` field it satisfies.
         # We therefore drop any `tool` message that is not directly preceded by an
         # assistant message containing `tool_calls`.  This prevents:
         #   Invalid parameter: messages with role 'tool' must be a response to a preceeding
@@ -984,7 +985,10 @@ class Model(ModelSettings):
                         cleaned
                         and isinstance(cleaned[-1], dict)
                         and cleaned[-1].get("role") == "assistant"
-                        and cleaned[-1].get("tool_calls")
+                        and (
+                            cleaned[-1].get("tool_calls") is not None
+                            or cleaned[-1].get("function_call") is not None
+                        )
                     ):
                         cleaned.append(msg)
                     else:
