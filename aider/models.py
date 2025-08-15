@@ -949,7 +949,7 @@ class Model(ModelSettings):
 
             kwargs["temperature"] = temperature
 
-        if functions is not None:
+        if functions:
             # Advertise all available tools and allow the model to decide which
             # one (if any) to invoke.
             kwargs["tools"] = [dict(type="function", function=f) for f in functions]
@@ -970,8 +970,7 @@ class Model(ModelSettings):
             dump(kwargs)
 
         # Sanitize the chat history.  OpenAI requires each `tool` message to appear
-        # immediately after the assistant message whose `tool_calls` **or**
-        # legacy `function_call` field it satisfies.
+        # immediately after the assistant message whose `tool_calls` field it satisfies.
         # We therefore drop any `tool` message that is not directly preceded by an
         # assistant message containing `tool_calls`.  This prevents:
         #   Invalid parameter: messages with role 'tool' must be a response to a preceeding
@@ -987,7 +986,6 @@ class Model(ModelSettings):
                         and cleaned[-1].get("role") == "assistant"
                         and (
                             cleaned[-1].get("tool_calls") is not None
-                            or cleaned[-1].get("function_call") is not None
                         )
                     ):
                         cleaned.append(msg)
