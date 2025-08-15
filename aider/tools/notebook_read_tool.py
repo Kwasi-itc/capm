@@ -16,7 +16,6 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-from aider.permissions import has_read_permission
 from .base_tool import BaseTool, ToolError
 
 MAX_CELLS = 500  # safety cap to avoid flooding the chat
@@ -96,8 +95,6 @@ class NotebookReadTool(BaseTool):
             raise ToolError(f"{nb_path} does not exist")
         if nb_path.suffix.lower() != ".ipynb":
             raise ToolError("File must have a .ipynb extension")
-        if not has_read_permission(nb_path):
-            raise ToolError(f"Read permission denied for {nb_path}")
 
         try:
             nb_json = json.loads(nb_path.read_text(encoding="utf-8"))

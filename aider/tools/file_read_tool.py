@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from PIL import Image  # pillow
-from aider.permissions import has_read_permission
 from aider.utils import is_image_file
 from .base_tool import BaseTool, ToolError
 
@@ -95,8 +94,6 @@ class FileReadTool(BaseTool):
             raise ToolError("file_path must be ABSOLUTE")
         if not path.exists():
             raise ToolError(f"{path} does not exist")
-        if not has_read_permission(path):
-            raise ToolError(f"Read permission denied for {path}")
 
     @staticmethod
     def _file_too_big(size_bytes: int) -> str:

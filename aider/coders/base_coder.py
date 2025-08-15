@@ -548,6 +548,10 @@ class Coder:
             tool_classes = discover_tools()
             self._tools = {cls.name: cls() for cls in tool_classes}
             self.functions = [tool.json_schema() for tool in self._tools.values()]
+            # Log discovered tools for easier debugging
+            if self.verbose:
+                tool_list = ', '.join(self._tools.keys()) or '(none)'
+                self.io.tool_output(f"Discovered tools: {tool_list}")
         else:
             # Still create a quick-lookup map even when functions were injected
             self._tools = {f["name"]: None for f in self.functions}
@@ -1448,9 +1452,11 @@ class Coder:
         # Notify IO that LLM processing is starting
         self.io.llm_started()
 
-        self.cur_messages += [
-            dict(role="user", content=inp),
-        ]
+        # Only append a user message when real input was provided. This avoids
+        # creating an empty ``user`` message when we are internally continuing
+        # the conversation after a tool call.
+        if inp:
+            self.cur_messages.append({"role": "user", "content": inp})
 
         chunks = self.format_messages()
         messages = chunks.all_messages()
@@ -1562,20 +1568,47 @@ class Coder:
             tool = self._tools.get(fn_name)
             if tool:
                 try:
+                    # The assistant's message with the tool_call is already in cur_messages.
+                    # We execute the tool and append the result message with role 'tool'.
                     output = tool.handle_call(args_json)
+                    
                     # Feed the tool result back into the dialogue so the model can use it.
-                    self.cur_messages.append(
-                        {"role": "tool", "name": fn_name, "content": output}
-                    )
+                    self.cur_messages.append({
+                        "role": "tool",
+                        "name": fn_name,
+                        "content": output
+                    })
+                    
                     # Clear the pending call & recursively continue the conversation.
                     self.partial_response_function_call = {}
                     self.partial_response_content = ""
                     yield from self.send_message("")
                     return
                 except ToolError as e:
-                    self.cur_messages.append(
-                        {"role": "assistant", "content": f"Tool error: {e}"}
-                    )
+                    self.cur_messages.append({
+                        "role": "assistant",
+                        "content": f"Tool error: {e}"
+                    })
+        # if self.partial_response_function_call:
+        #     fn_name = self.partial_response_function_call.get("name")
+        #     args_json = self.partial_response_function_call.get("arguments", "{}")
+        #     tool = self._tools.get(fn_name)
+        #     if tool:
+        #         try:
+        #             output = tool.handle_call(args_json)
+        #             # Feed the tool result back into the dialogue so the model can use it.
+        #             self.cur_messages.append(
+        #                 {"role": "tool", "name": fn_name, "content": output}
+        #             )
+        #             # Clear the pending call & recursively continue the conversation.
+        #             self.partial_response_function_call = {}
+        #             self.partial_response_content = ""
+        #             yield from self.send_message("")
+        #             return
+        #         except ToolError as e:
+        #             self.cur_messages.append(
+        #                 {"role": "assistant", "content": f"Tool error: {e}"}
+        #             )
 
         self.show_usage_report()
 

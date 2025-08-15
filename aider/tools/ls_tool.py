@@ -11,7 +11,6 @@ from collections import deque
 from pathlib import Path
 from typing import Any, Dict, List
 
-from aider.permissions import has_read_permission
 from .base_tool import BaseTool, ToolError
 
 MAX_FILES = 1_000
@@ -122,10 +121,6 @@ class LsTool(BaseTool):
             raise ToolError(f"{root} does not exist")
         if not root.is_dir():
             raise ToolError(f"{root} is not a directory")
-
-        # Permission check
-        if not has_read_permission(root):
-            raise ToolError(f"Read permission denied for {root}")
 
         rel_paths, truncated = self._breadth_first(root)
         tree_str = f"- {root}/\n" + self._print_tree(self._paths_to_tree(rel_paths))
