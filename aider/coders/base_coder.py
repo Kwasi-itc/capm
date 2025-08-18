@@ -1849,7 +1849,9 @@ class Coder:
           RepoMap suggestions (no confirmation dialog).
         * Without --auto-context → keep the original interactive prompt.
         """
-        mentioned_rel_fnames = self.get_file_mentions(content)
+        # Auto-add workflow disabled – files must now be provided explicitly
+        # through helper tools only.
+        return
 
         new_mentions = mentioned_rel_fnames - self.ignore_mentions
         if not new_mentions:
