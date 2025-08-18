@@ -1853,6 +1853,37 @@ class Coder:
         # through helper tools only.
         return
 
+        # -----------------------------------------------------------------
+        # The original auto-add implementation is kept below for convenience.
+        # Remove the leading “# ” to re-enable the behaviour.
+        #
+        # new_mentions = mentioned_rel_fnames - self.ignore_mentions
+        # if not new_mentions:
+        #     return
+        #
+        # added_fnames = []
+        #
+        # if self.auto_context:
+        #     # Silently add without asking
+        #     for rel_fname in sorted(new_mentions):
+        #         self.add_rel_fname(rel_fname)
+        #         added_fnames.append(rel_fname)
+        # else:
+        #     # Interactive prompt
+        #     group = ConfirmGroup(new_mentions)
+        #     for rel_fname in sorted(new_mentions):
+        #         if self.io.confirm_ask(
+        #             "Add file to the chat?", subject=rel_fname, group=group, allow_never=True
+        #         ):
+        #             self.add_rel_fname(rel_fname)
+        #             added_fnames.append(rel_fname)
+        #         else:
+        #             self.ignore_mentions.add(rel_fname)
+        #
+        # if added_fnames:
+        #     return prompts.added_files.format(fnames=", ".join(added_fnames))
+        # -----------------------------------------------------------------
+
 
     def send(self, messages, model=None, functions=None):
         self.got_reasoning_content = False
