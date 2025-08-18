@@ -32,6 +32,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.style import Style as RichStyle
 from rich.text import Text
+import json
 
 from aider.mdstream import MarkdownStream
 
@@ -1024,6 +1025,25 @@ class InputOutput:
             show_resp = Text(message or "(empty response)")
 
         self.console.print(show_resp)
+
+    def format_tool_call(self, name, args_json):
+        """
+        Nicely format a tool/function call received from the LLM.
+
+        Returns a markdown string that shows the tool name and pretty-printed
+        JSON arguments so that the user can understand what will be executed.
+        """
+        try:
+            if isinstance(args_json, str):
+                args = json.loads(args_json)
+            else:
+                args = args_json
+            args_text = json.dumps(args, indent=4, ensure_ascii=False)
+        except Exception:
+            # Fall back to the raw representation if JSON parsing fails
+            args_text = str(args_json)
+
+        return f"**Tool call**: `{name}`\n\n```json\n{args_text}\n```"
 
     def set_placeholder(self, placeholder):
         """Set a one-time placeholder text for the next input prompt."""

@@ -1976,7 +1976,17 @@ class Coder:
             self.io.tool_error(show_content_err)
             raise Exception("No data found in LLM response!")
 
-        show_resp = self.render_incremental_response(True)
+        if (
+            not self.partial_response_content
+            and self.partial_response_function_call
+            and self.partial_response_function_call.get("name")
+        ):
+            show_resp = self.io.format_tool_call(
+                self.partial_response_function_call.get("name"),
+                self.partial_response_function_call.get("arguments", "{}"),
+            )
+        else:
+            show_resp = self.render_incremental_response(True)
 
         if reasoning_content:
             formatted_reasoning = format_reasoning_content(
@@ -2069,7 +2079,19 @@ class Coder:
                 yield text
 
         if not received_content:
-            self.io.tool_warning("Empty response received from LLM. Check your provider account?")
+            if (
+                self.partial_response_function_call
+                and self.partial_response_function_call.get("name")
+            ):
+                formatted = self.io.format_tool_call(
+                    self.partial_response_function_call.get("name"),
+                    self.partial_response_function_call.get("arguments", "{}"),
+                )
+                self.io.assistant_output(formatted, pretty=self.show_pretty())
+            else:
+                self.io.tool_warning(
+                    "Empty response received from LLM. Check your provider account?"
+                )
 
     def live_incremental_response(self, final):
         show_resp = self.render_incremental_response(final)
