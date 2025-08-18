@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: E303,W293
 
 import base64
 import hashlib
@@ -28,7 +29,7 @@ from typing import List
 
 from rich.console import Console
 
-from aider import __version__, models, prompts, urls, utils
+from aider import __version__, models, urls, utils
 from aider.analytics import Analytics
 from aider.commands import Commands
 from aider.exceptions import LiteLLMExceptions
