@@ -25,6 +25,7 @@ class GrepTool(BaseTool):
     name = "grep"
     description = (
         "Search file contents using a regular-expression pattern. "
+        "If the pattern is not valid regex it is searched as a literal substring. "
         "Returns matching file paths (sorted by modification time)."
     )
     parameters: Dict[str, Any] = {
@@ -66,8 +67,9 @@ class GrepTool(BaseTool):
         try:
             # Compile as bytes because mmap yields bytes
             regex = re.compile(pattern.encode("utf-8"))
-        except re.error as exc:  # noqa: PERF203
-            raise ToolError(f"Invalid regular expression: {exc}") from exc
+        except re.error:
+            # Fall back to a *literal* search when the pattern is not valid regex
+            regex = re.compile(re.escape(pattern).encode("utf-8"))
 
         root = Path(path or os.getcwd()).expanduser().resolve()
         if not root.is_dir():
