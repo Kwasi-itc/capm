@@ -177,9 +177,25 @@ class BashTool(BaseTool):
                 text=True,
                 timeout=timeout_s,
             )
-            # Non-zero exit status → error (helps Windows tests)
+
+            # ------- build nice output header & body up-front --------------
+            elapsed_ms = int((time.time() - start) * 1000)
+            combined = (proc.stdout or "") + (proc.stderr or "")
+            out, total_lines = _truncate(combined)
+            header = f"exit={proc.returncode}  lines={total_lines}  elapsed={elapsed_ms}ms"
+
+            # Even on non-zero exit status, surface the captured output so the
+            # user/LLM can see what actually happened instead of hiding it away.
             if proc.returncode != 0:
-                raise ToolError(f"Command exited with status {proc.returncode}")
+                raise ToolError(
+                    textwrap.dedent(
+                        f"""\
+                        {header}
+                        ── output ──
+                        {out}
+                        """
+                    ).rstrip()
+                )
         except subprocess.TimeoutExpired:
             raise ToolError(f"Command timed out after {timeout_ms} ms") from None
         except Exception as exc:  # noqa: BLE001
