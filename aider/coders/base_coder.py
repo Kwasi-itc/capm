@@ -29,7 +29,7 @@ from typing import List
 
 from rich.console import Console
 
-from aider import __version__, models, urls, utils
+from aider import __version__, models, urls, utils, prompts
 from aider.analytics import Analytics
 from aider.commands import Commands
 from aider.exceptions import LiteLLMExceptions
@@ -1850,6 +1850,7 @@ class Coder:
           RepoMap suggestions (no confirmation dialog).
         * Without --auto-context → keep the original interactive prompt.
         """
+        # mentioned_rel_fnames = self.get_file_mentions(content)
         # Auto-add workflow disabled – files must now be provided explicitly
         # through helper tools only.
         return
