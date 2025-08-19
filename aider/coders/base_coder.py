@@ -1572,7 +1572,13 @@ class Coder:
                     # The assistant's message with the tool_call is already in cur_messages.
                     # We execute the tool and append the result message with role 'tool'.
                     output = tool.handle_call(args_json)
-                    
+
+                    # Show the tool's output to the user just like we show the call itself
+                    self.io.assistant_output(
+                        self.io.format_tool_result(fn_name, output),
+                        pretty=self.show_pretty(),
+                    )
+
                     # Feed the tool result back into the dialogue so the model can use it.
                     self.cur_messages.append({
                         "role": "tool",

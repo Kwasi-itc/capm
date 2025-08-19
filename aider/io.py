@@ -1045,6 +1045,27 @@ class InputOutput:
 
         return f"**Tool call**: `{name}`\n\n```json\n{args_text}\n```"
 
+    def format_tool_result(self, name, output):
+        """
+        Nicely format the *result* returned by a tool/function call so the user can
+        see what was fed back to the LLM.
+
+        Returns a markdown string with the tool name and the captured output wrapped
+        in a fenced block (auto-detecting JSON vs plain-text for convenience).
+        """
+        # Detect json-serialisable structures for pretty printing
+        fence_lang = "text"
+        try:
+            if isinstance(output, (dict, list)):
+                output_text = json.dumps(output, indent=4, ensure_ascii=False)
+                fence_lang = "json"
+            else:
+                output_text = str(output)
+        except Exception:
+            output_text = str(output)
+
+        return f"**Tool result**: `{name}`\n\n```{fence_lang}\n{output_text}\n```"
+
     def set_placeholder(self, placeholder):
         """Set a one-time placeholder text for the next input prompt."""
         self.placeholder = placeholder
