@@ -60,7 +60,7 @@ class RepoMapTool(BaseTool):
         else:
             other_files = other_files or []
         try:
-            rm = RepoMap(root=".", io=self.io)
+            rm = RepoMap(root=".", io=getattr(self, "io", None))
             if max_tokens is not None:
                 rm.max_map_tokens = max_tokens
             return rm.get_repo_map(chat_files, other_files, force_refresh=True) or ""
