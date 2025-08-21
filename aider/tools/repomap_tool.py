@@ -1,0 +1,66 @@
+"""
+RepoMapTool – expose a condensed repository map to the LLM.
+
+This tool leverages aider.repomap.RepoMap to generate a concise view of files
+that are *not* already in the chat, helping the model reference wider context.
+"""
+from __future__ import annotations
+
+from typing import List, Optional
+
+from aider.repomap import RepoMap
+from .base_tool import BaseTool, ToolError
+
+
+class RepoMapTool(BaseTool):
+    # ---------------- metadata visible to the LLM -----------------
+    name = "repo_map"
+    description = "Return a concise repository map of files not yet shared in chat."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "chat_files": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Paths of files already present in the chat context.",
+            },
+            "other_files": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Additional repo files to consider (optional).",
+            },
+            "max_tokens": {
+                "type": "integer",
+                "description": "Token budget for the generated map (optional).",
+            },
+        },
+        "required": ["chat_files"],
+    }
+
+    # -------------------------- runtime ---------------------------
+    def run(  # noqa: D401
+        self,
+        *,
+        chat_files: List[str],
+        other_files: Optional[List[str]] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """
+        Generate and return a repo-map string.
+
+        Raises
+        ------
+        ToolError
+            If repo-map generation fails.
+        """
+        other_files = other_files or []
+        try:
+            rm = RepoMap(root=".")
+            if max_tokens is not None:
+                rm.max_map_tokens = max_tokens
+            return rm.get_repo_map(chat_files, other_files, force_refresh=True) or ""
+        except Exception as exc:  # pragma: no cover
+            raise ToolError(str(exc)) from exc
+
+
+__all__ = ["RepoMapTool"]

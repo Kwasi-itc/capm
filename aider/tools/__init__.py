@@ -28,4 +28,4 @@ def discover_tools() -> List[Type[BaseTool]]:
     ]
 
 
-__all__ = ["BaseTool", "discover_tools"]
+__all__ = ["BaseTool", "discover_tools", "RepoMapTool"]
