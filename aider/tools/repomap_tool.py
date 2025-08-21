@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from aider.repomap import RepoMap
+from aider.repomap import RepoMap, find_src_files
 from .base_tool import BaseTool, ToolError
 
 
@@ -54,7 +54,11 @@ class RepoMapTool(BaseTool):
             If repo-map generation fails.
         """
         chat_files = chat_files or []
-        other_files = other_files or []
+        if other_files is None:
+            # Default to every file in the repo minus the ones already in chat
+            other_files = [f for f in find_src_files(".") if f not in chat_files]
+        else:
+            other_files = other_files or []
         try:
             rm = RepoMap(root=".")
             if max_tokens is not None:
