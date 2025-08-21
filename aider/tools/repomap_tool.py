@@ -22,7 +22,7 @@ class RepoMapTool(BaseTool):
             "chat_files": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "Paths of files already present in the chat context.",
+                "description": "Paths of files already present in the chat context (optional).",
             },
             "other_files": {
                 "type": "array",
@@ -34,14 +34,14 @@ class RepoMapTool(BaseTool):
                 "description": "Token budget for the generated map (optional).",
             },
         },
-        "required": ["chat_files"],
+        "required": [],
     }
 
     # -------------------------- runtime ---------------------------
     def run(  # noqa: D401
         self,
         *,
-        chat_files: List[str],
+        chat_files: Optional[List[str]] = None,
         other_files: Optional[List[str]] = None,
         max_tokens: Optional[int] = None,
     ) -> str:
@@ -53,6 +53,7 @@ class RepoMapTool(BaseTool):
         ToolError
             If repo-map generation fails.
         """
+        chat_files = chat_files or []
         other_files = other_files or []
         try:
             rm = RepoMap(root=".")
