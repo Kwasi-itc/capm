@@ -183,8 +183,10 @@ class RepoMap:
             max_map_tokens = target
 
         try:
+            # In agentic usage we purposely ignore which files are already in the chat
+            # so that the repo-map can decide relevance independently.
             files_listing = self.get_ranked_tags_map(
-                chat_files,
+                [],
                 other_files,
                 max_map_tokens,
                 mentioned_fnames,
@@ -398,6 +400,8 @@ class RepoMap:
     def get_ranked_tags(
         self, chat_fnames, other_fnames, mentioned_fnames, mentioned_idents, progress=None
     ):
+        # Agentic mode: we don’t want chat files to bias the ranking or be excluded.
+        chat_fnames = []
         import networkx as nx
         from concurrent.futures import ThreadPoolExecutor, as_completed
         import multiprocessing
