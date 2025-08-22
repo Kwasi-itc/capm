@@ -347,8 +347,10 @@ class RepoMapTool(BaseTool):
                 pbar.update(high)
                 break
             
-            pbar.n = mid
-            pbar.refresh()
+            # Advance the progress bar by the *actual* amount of new tags examined
+            increment = mid - pbar.n
+            if increment > 0:
+                pbar.update(increment)
             
             current_tags = ranked_tags[:mid]
             formatted_map = self._format_map(current_tags)
@@ -359,6 +361,9 @@ class RepoMapTool(BaseTool):
                 low = mid + 1
             else:
                 high = mid - 1
+        # Ensure the progress bar reaches 100 % before closing
+        if pbar.n < pbar.total:
+            pbar.update(pbar.total - pbar.n)
         pbar.close()
 
         return best_map or "Could not generate a repository map within the token limit."
