@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 # --- grep-ast for code parsing ---
 # tree_sitter is a dependency of grep-ast
 from grep_ast import filename_to_lang
-from grep_ast.tsl import get_language, get_parser, get_scm_fname, USING_TSL_PACK
+from grep_ast.tsl import get_language, get_parser, USING_TSL_PACK
+from aider.repomap import get_scm_fname
 
 
 # --- Intelligent RepoMap Tool ---
