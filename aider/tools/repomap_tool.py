@@ -89,6 +89,8 @@ class RepoMapTool(BaseTool):
             "__pycache__",
             "node_modules",
             "site-packages",
+            "build",        # ignore build artefacts
+            ".next",        # ignore Next.js build output
         }
         # Use a versioned cache directory to avoid conflicts if the tool's logic changes.
         cache_version = 5 if USING_TSL_PACK else 4
@@ -274,10 +276,35 @@ class RepoMapTool(BaseTool):
             return ""
 
         output = []
-        files_to_render = defaultdict(list)
-        # Group tags by file and line to create a concise summary
+        files_to_render: dict[str, list[str]] = defaultdict(list)
+
+        # Cache file contents so we only read each source file once
+        file_lines_cache: dict[str, list[str]] = {}
+
+        def get_snippet(file_path: str, line_no: int) -> str:
+            """Return the stripped source line at 1-based *line_no* (may be empty)."""
+            if file_path not in file_lines_cache:
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        file_lines_cache[file_path] = f.readlines()
+                except Exception:
+                    file_lines_cache[file_path] = []
+            lines = file_lines_cache[file_path]
+            if 0 <= (line_no - 1) < len(lines):
+                snippet = lines[line_no - 1].strip()
+                # Truncate very long lines to keep output readable
+                return snippet[:120]
+            return ""
+
+        # Group tags by file, adding a helpful code snippet after the name/line
         for tag in tags:
-            files_to_render[tag.rel_fname].append(f"  - {tag.name} (line {tag.line})")
+            snippet = get_snippet(tag.fname, tag.line)
+            if snippet:
+                files_to_render[tag.rel_fname].append(
+                    f"  - {tag.name} (line {tag.line}): {snippet}"
+                )
+            else:
+                files_to_render[tag.rel_fname].append(f"  - {tag.name} (line {tag.line})")
 
         for fname, items in files_to_render.items():
             output.append(f"{fname}:")
