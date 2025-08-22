@@ -23,6 +23,9 @@ import networkx as nx
 from aider.tools.base_tool import BaseTool
 from diskcache import Cache
 from tqdm import tqdm
+import logging
+
+logger = logging.getLogger(__name__)
 
 # --- grep-ast for code parsing ---
 # tree_sitter is a dependency of grep-ast
@@ -144,8 +147,16 @@ class RepoMapTool(BaseTool):
         query = language.query(query_scm)
         captures = query.captures(tree.root_node)
 
+        # Handle different return shapes between tree-sitter-language-pack and tree-sitter-languages
+        if USING_TSL_PACK:
+            all_nodes = []
+            for tag_name, nodes in captures.items():
+                all_nodes += [(node, tag_name) for node in nodes]
+        else:
+            all_nodes = captures
+
         results = []
-        for node, tag_name in captures:
+        for node, tag_name in all_nodes:
             kind = None
             if tag_name.startswith("name.definition."):
                 kind = "def"
@@ -253,9 +264,15 @@ class RepoMapTool(BaseTool):
         logger.info(f"Starting intelligent repo map for {self.root}")
 
         all_files = [p for p in self.root.rglob('*') if '.git' not in p.parts and p.is_file()]
+
+        # Convert focus files to repository-relative paths so they match graph node names
+        focus_files_rel = [
+            self._get_rel_path(Path(f).resolve()) for f in focus_files
+            if Path(f).exists()
+        ]
         
         graph = self._build_code_graph(all_files)
-        ranked_tags = self._rank_definitions(graph, focus_files)
+        ranked_tags = self._rank_definitions(graph, focus_files_rel)
 
         # Binary search to find the optimal number of tags for the token limit
         low, high = 0, len(ranked_tags)
