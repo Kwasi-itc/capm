@@ -1578,6 +1578,7 @@ class Coder:
                         self.io.format_tool_result(fn_name, output),
                         pretty=self.show_pretty(),
                     )
+                    # Comment this to remove tool call output...
 
                     # Feed the tool result back into the dialogue so the model can use it.
                     self.cur_messages.append({
