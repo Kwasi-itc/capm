@@ -16,6 +16,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 from pathlib import Path
 from collections import defaultdict, Counter, namedtuple
+import concurrent.futures
+import os
 
 # --- Third-party libraries ---
 import jsonschema
@@ -75,6 +77,19 @@ class RepoMapTool(BaseTool):
 
     def __init__(self, root: str | Path | None = None):
         self.root = Path(root).resolve() if root else Path.cwd()
+
+        # Common virtual-env / dependency folders we should skip when walking the repo
+        self.EXCLUDE_DIRS = {
+            ".git",
+            "venv",
+            ".venv",
+            "env",
+            ".env",
+            "aider-env",
+            "__pycache__",
+            "node_modules",
+            "site-packages",
+        }
         # Use a versioned cache directory to avoid conflicts if the tool's logic changes.
         cache_version = 5 if USING_TSL_PACK else 4
         self.cache_dir = self.root / f".repomap.cache.v{cache_version}"
@@ -185,15 +200,31 @@ class RepoMapTool(BaseTool):
 
         # Gather all definitions and references from files
         files_to_process = [f for f in all_files if f.is_file()]
-        for file_path in tqdm(files_to_process, desc="1/3 Parsing files", unit="file"):
-            rel_path_str = self._get_rel_path(file_path)
-            tags = self._get_tags_from_file(file_path)
-            for tag in tags:
-                if tag.kind == "def":
-                    defines[tag.name].add(rel_path_str)
-                    self.definitions[(rel_path_str, tag.name)].add(tag)
-                elif tag.kind == "ref":
-                    references[tag.name].append(rel_path_str)
+        cpu_cnt = os.cpu_count() or 4
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(cpu_cnt, 8)) as executor:
+            futures = {
+                executor.submit(self._get_tags_from_file, fp): fp for fp in files_to_process
+            }
+            for fut in tqdm(
+                concurrent.futures.as_completed(futures),
+                total=len(futures),
+                desc="1/3 Parsing files",
+                unit="file",
+            ):
+                file_path = futures[fut]
+                rel_path_str = self._get_rel_path(file_path)
+                try:
+                    tags = fut.result()
+                except Exception as e:
+                    logger.warning("Error parsing %s: %s", file_path, e)
+                    continue
+
+                for tag in tags:
+                    if tag.kind == "def":
+                        defines[tag.name].add(rel_path_str)
+                        self.definitions[(rel_path_str, tag.name)].add(tag)
+                    elif tag.kind == "ref":
+                        references[tag.name].append(rel_path_str)
 
         # Build the graph from the collected data
         G = nx.MultiDiGraph()
@@ -264,7 +295,10 @@ class RepoMapTool(BaseTool):
         self.root = Path(path).resolve()
         logger.info(f"Starting intelligent repo map for {self.root}")
 
-        all_files = [p for p in self.root.rglob('*') if '.git' not in p.parts and p.is_file()]
+        def _should_exclude(p: Path) -> bool:
+            return any(part in self.EXCLUDE_DIRS for part in p.parts)
+
+        all_files = [p for p in self.root.rglob('*') if p.is_file() and not _should_exclude(p)]
 
         # Convert focus files to repository-relative paths so they match graph node names
         focus_files_rel = [
