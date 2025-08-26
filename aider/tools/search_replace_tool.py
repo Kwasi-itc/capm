@@ -8,11 +8,9 @@ try:
 except ImportError:
     git = None
 
-# Assumes BaseTool and ToolError are imported from your existing module, like so:
-# from .base import BaseTool, ToolError
-#
-# Also assumes the following utility is available:
-# from aider.utils import GitTemporaryDirectory
+# Import base tool primitives and GitTemporaryDirectory helper
+from .base_tool import BaseTool, ToolError
+from aider.utils import GitTemporaryDirectory
 
 logger = logging.getLogger(__name__)
 
