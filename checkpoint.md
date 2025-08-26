@@ -5,3 +5,12 @@
 
 ### modifications to make: 
 #### work on the bash tool, make the ls tool more descriptive, and adding more aider specific tools
+
+
+SearchReplaceTool
+GitTool
+DiffTool
+ApplyPatchTool
+------------------
+EditBlockApplyTool
+UnifiedDiffApplyTool
