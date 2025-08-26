@@ -130,9 +130,9 @@ class BashTool(BaseTool):
             path = Path(cwd).expanduser().resolve()
             if not path.is_dir():
                 raise ToolError(f"cwd={path} is not a directory")
-            BashTool._session_cwd = path
+            self._session_cwd = path
 
-        workdir = BashTool._session_cwd or Path.cwd()
+        workdir = self._session_cwd or Path.cwd()
 
         # ----- choose shell program -----
         bash_exe = shutil.which("bash")
