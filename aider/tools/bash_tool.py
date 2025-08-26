@@ -27,7 +27,7 @@ from .base_tool import BaseTool, ToolError
 # --------------- policy constants ------------------------------------------
 MAX_OUTPUT_CHARS = 30_000
 MAX_TIMEOUT_MS = 600_000             # 10 min
-DEFAULT_TIMEOUT_MS = 30 * 60 * 1000  # 30 min
+DEFAULT_TIMEOUT_MS = 600_000  # 10 min
 
 BANNED_COMMANDS = {
     "alias",
@@ -99,8 +99,14 @@ class BashTool(BaseTool):
         "additionalProperties": False,
     }
 
-    # persistent working directory across calls
-    _session_cwd: Path | None = None
+    def __init__(self) -> None:
+        """
+        Initialize a new BashTool instance with its own persistent working
+        directory state.
+        """
+        super().__init__()
+        self._session_cwd: Path | None = None
+
 
     # ---------------- main entry point ------------------------------------
     def run(self, *, cmd: str, timeout: int | None = None, cwd: str | None = None) -> str:
@@ -115,6 +121,9 @@ class BashTool(BaseTool):
         timeout_ms = timeout if timeout is not None else DEFAULT_TIMEOUT_MS
         timeout_ms = min(max(timeout_ms, 1), MAX_TIMEOUT_MS)
         timeout_s = timeout_ms / 1000.0
+
+        # track any temporary file created for long inline python
+        tmp_path: str | None = None
 
         # working directory (persistent session)
         if cwd:
@@ -161,7 +170,8 @@ class BashTool(BaseTool):
                     )
                     tmp.write(py_code)
                     tmp.close()
-                    cmd_list = [sys.executable, tmp.name]
+                    tmp_path = tmp.name
+                    cmd_list = [sys.executable, tmp_path]
                 else:
                     cmd_list = ["cmd", "/c", cmd_fixed]
             else:
@@ -187,6 +197,8 @@ class BashTool(BaseTool):
             # Even on non-zero exit status, surface the captured output so the
             # user/LLM can see what actually happened instead of hiding it away.
             if proc.returncode != 0:
+                if tmp_path:
+                    Path(tmp_path).unlink(missing_ok=True)
                 raise ToolError(
                     textwrap.dedent(
                         f"""\
@@ -206,10 +218,13 @@ class BashTool(BaseTool):
         out, total_lines = _truncate(combined)
 
         header = f"exit={proc.returncode}  lines={total_lines}  elapsed={elapsed_ms}ms"
-        return textwrap.dedent(
+        result = textwrap.dedent(
             f"""\
             {header}
             ── output ──
             {out}
             """
         ).rstrip()
+        if tmp_path:
+            Path(tmp_path).unlink(missing_ok=True)
+        return result
