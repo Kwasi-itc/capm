@@ -45,7 +45,12 @@ class FileEditTool(BaseTool):
             },
             "old_string": {
                 "type": "string",
-                "description": "Exact text to replace. Leave empty to create a new file.",
+                "description": (
+                    "Exact literal text to replace. "
+                    "Must include at least 3 complete lines *before* and *after* the target "
+                    "code so the match is unique. "
+                    "Leave empty to create a new file."
+                ),
             },
             "new_string": {
                 "type": "string",
@@ -164,6 +169,16 @@ class FileEditTool(BaseTool):
                 f"Unsupported edit_format '{edit_format}'. "
                 f"Allowed formats: {', '.join(sorted(_SUPPORTED_EDIT_FORMATS))}."
             )
+
+        # -------- validate context requirement ------------
+        if old_string:
+            # Require at least 3 lines of context *before* and *after* the target line
+            line_breaks = old_string.count("\n")
+            if line_breaks < 6:
+                raise ToolError(
+                    "old_string must include at least 3 lines *before* and 3 lines *after* "
+                    "the target text (≥ 6 newline characters)."
+                )
 
         # -------- create new file --------
         if old_string == "":
