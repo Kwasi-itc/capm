@@ -23,6 +23,10 @@ from .base_tool import BaseTool, ToolError
 
 MAX_DIFF_LINES = 200
 
+# supported diff/edit output formats
+_DEFAULT_EDIT_FORMAT = "unified"
+_SUPPORTED_EDIT_FORMATS = {"unified", "whole", "edit-block"}
+
 
 class FileEditTool(BaseTool):
     # --------------- metadata shown to the LLM --------------------
@@ -46,6 +50,12 @@ class FileEditTool(BaseTool):
             "new_string": {
                 "type": "string",
                 "description": "Replacement text. Leave empty to delete the match.",
+            },
+            "edit_format": {
+                "type": "string",
+                "description": "Optional format of the diff to return. "
+                "One of 'unified', 'whole', or 'edit-block'. Defaults to 'unified'.",
+                "enum": ["unified", "whole", "edit-block"],
             },
         },
         "required": ["file_path", "old_string", "new_string"],
@@ -80,17 +90,69 @@ class FileEditTool(BaseTool):
             diff = diff[:MAX_DIFF_LINES] + ["\n... (diff truncated) ...\n"]
         return "".join(diff)
 
+    # -------- additional diff format helpers ---------------------
+    @staticmethod
+    def _make_whole(updated: str, rel_name: str) -> str:
+        """
+        Return the full updated file as the diff payload.
+        """
+        return f"----- {rel_name} (whole file) -----\n{updated}"
+
+    @staticmethod
+    def _make_edit_block(orig: str, updated: str, rel_name: str) -> str:
+        """
+        Produce a minimal edit-block style diff showing only the changed lines
+        with no surrounding context. This format is easier for the LLM to
+        apply as a targeted patch.
+        """
+        diff_lines = list(
+            difflib.unified_diff(
+                orig.splitlines(keepends=True),
+                updated.splitlines(keepends=True),
+                fromfile=rel_name,
+                tofile=rel_name,
+                n=0,  # no context lines
+            )
+        )[2:]  # drop the ---/+++ headers
+        if len(diff_lines) > MAX_DIFF_LINES:
+            diff_lines = diff_lines[:MAX_DIFF_LINES] + ["\n... (diff truncated) ...\n"]
+        return "".join(diff_lines)
+
+    @staticmethod
+    def _make_output(orig: str, updated: str, rel_name: str, edit_format: str) -> str:
+        if edit_format == "unified":
+            return FileEditTool._make_diff(orig, updated, rel_name)
+        if edit_format == "whole":
+            return FileEditTool._make_whole(updated, rel_name)
+        # default to edit-block
+        return FileEditTool._make_edit_block(orig, updated, rel_name)
+
     # ---------------- main entry point ----------------------------
-    def run(self, *, file_path: str, old_string: str, new_string: str) -> str:
+    def run(
+        self,
+        *,
+        file_path: str,
+        old_string: str,
+        new_string: str,
+        edit_format: str | None = None,
+    ) -> str:
         start = time.time()
         target = Path(file_path).expanduser().resolve()
+
+        # -------- select diff/edit format ----------
+        edit_format = (edit_format or _DEFAULT_EDIT_FORMAT).lower()
+        if edit_format not in _SUPPORTED_EDIT_FORMATS:
+            raise ToolError(
+                f"Unsupported edit_format '{edit_format}'. "
+                f"Allowed formats: {', '.join(sorted(_SUPPORTED_EDIT_FORMATS))}."
+            )
 
         # -------- create new file --------
         if old_string == "":
             if target.exists():
                 raise ToolError("Cannot create file: path already exists.")
             self._write_text(target, new_string)
-            diff = self._make_diff("", new_string, str(target))
+            diff = self._make_output("", new_string, str(target), edit_format)
             ms = int((time.time() - start) * 1000)
             return f"Created {target} in {ms} ms\n{diff}"
 
@@ -112,7 +174,7 @@ class FileEditTool(BaseTool):
             raise ToolError("Edit produced no change (strings identical).")
 
         self._write_text(target, updated)
-        diff = self._make_diff(original, updated, str(target))
+        diff = self._make_output(original, updated, str(target), edit_format)
         ms = int((time.time() - start) * 1000)
         verb = "Deleted" if new_string == "" else "Updated"
         return f"{verb} {target} in {ms} ms\n{diff}"
