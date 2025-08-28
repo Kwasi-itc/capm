@@ -57,6 +57,21 @@ class FileEditTool(BaseTool):
                 "One of 'unified', 'whole', or 'edit-block'. Defaults to 'unified'.",
                 "enum": ["unified", "whole", "edit-block"],
             },
+            "line_number": {
+                "type": "integer",
+                "description": "1-based line number where `old_string` should be replaced if "
+                "there are multiple occurrences.",
+            },
+            "before_context": {
+                "type": "string",
+                "description": "Text expected on the line *before* `old_string` to help "
+                "uniquely identify the correct match.",
+            },
+            "after_context": {
+                "type": "string",
+                "description": "Text expected on the line *after* `old_string` to help "
+                "uniquely identify the correct match.",
+            },
         },
         "required": ["file_path", "old_string", "new_string"],
         "additionalProperties": False,
@@ -135,6 +150,9 @@ class FileEditTool(BaseTool):
         old_string: str,
         new_string: str,
         edit_format: str | None = None,
+        line_number: int | None = None,
+        before_context: str | None = None,
+        after_context: str | None = None,
     ) -> str:
         start = time.time()
         target = Path(file_path).expanduser().resolve()
@@ -161,15 +179,57 @@ class FileEditTool(BaseTool):
             raise ToolError(f"Target path {target} does not exist or is not a file.")
 
         original = self._read_text(target)
-        hits = original.count(old_string)
-        if hits == 0:
-            raise ToolError("`old_string` not found in file.")
-        if hits > 1:
-            raise ToolError(
-                f"`old_string` occurs {hits} times. Provide more context so the match is unique."
-            )
 
-        updated = original.replace(old_string, new_string, 1)
+        # -------- locate ALL occurrences --------------------------
+        lines = original.splitlines(keepends=True)
+        occurrences: list[int] = []
+        for idx, line in enumerate(lines):
+            if old_string in line:
+                occurrences.append(idx)
+
+        if not occurrences:
+            raise ToolError("`old_string` not found in file.")
+
+        # -------- disambiguate occurrences ------------------------
+        selected_idx: int | None = None
+
+        if line_number is not None:
+            # 1-based external line numbers
+            for idx in occurrences:
+                if idx + 1 == line_number:
+                    selected_idx = idx
+                    break
+            if selected_idx is None:
+                raise ToolError(f"`old_string` not found at line {line_number}.")
+
+        elif before_context is not None or after_context is not None:
+            for idx in occurrences:
+                ok = True
+                if before_context is not None and idx > 0:
+                    ok &= before_context in lines[idx - 1]
+                if after_context is not None and idx < len(lines) - 1:
+                    ok &= after_context in lines[idx + 1]
+                if ok:
+                    if selected_idx is not None:
+                        raise ToolError(
+                            "Provided context matches multiple occurrences; "
+                            "please add more specific context."
+                        )
+                    selected_idx = idx
+            if selected_idx is None:
+                raise ToolError("No occurrence matches the provided context.")
+
+        else:
+            if len(occurrences) > 1:
+                raise ToolError(
+                    f"`old_string` occurs {len(occurrences)} times. Provide "
+                    "`line_number`, `before_context`, or `after_context` to disambiguate."
+                )
+            selected_idx = occurrences[0]
+
+        # -------- perform the single replacement ------------------
+        lines[selected_idx] = lines[selected_idx].replace(old_string, new_string, 1)
+        updated = "".join(lines)
         if updated == original:
             raise ToolError("Edit produced no change (strings identical).")
 
