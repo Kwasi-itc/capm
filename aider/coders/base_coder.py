@@ -548,6 +548,10 @@ class Coder:
 
             tool_classes = discover_tools()
             self._tools = {cls.name: cls() for cls in tool_classes}
+
+            # give each instantiated tool a reference back to this coder
+            for _tool in self._tools.values():
+                setattr(_tool, "coder", self)
             self.functions = [tool.json_schema() for tool in self._tools.values()]
             # Log discovered tools for easier debugging
             if self.verbose:
