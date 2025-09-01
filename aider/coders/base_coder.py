@@ -1601,26 +1601,7 @@ class Coder:
                         "role": "assistant",
                         "content": f"Tool error: {e}"
                     })
-        # if self.partial_response_function_call:
-        #     fn_name = self.partial_response_function_call.get("name")
-        #     args_json = self.partial_response_function_call.get("arguments", "{}")
-        #     tool = self._tools.get(fn_name)
-        #     if tool:
-        #         try:
-        #             output = tool.handle_call(args_json)
-        #             # Feed the tool result back into the dialogue so the model can use it.
-        #             self.cur_messages.append(
-        #                 {"role": "tool", "name": fn_name, "content": output}
-        #             )
-        #             # Clear the pending call & recursively continue the conversation.
-        #             self.partial_response_function_call = {}
-        #             self.partial_response_content = ""
-        #             yield from self.send_message("")
-        #             return
-        #         except ToolError as e:
-        #             self.cur_messages.append(
-        #                 {"role": "assistant", "content": f"Tool error: {e}"}
-        #             )
+        
 
         self.show_usage_report()
 
