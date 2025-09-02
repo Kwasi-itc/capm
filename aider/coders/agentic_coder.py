@@ -22,6 +22,21 @@ class AgenticCoder(GenericCoder):  # type: ignore[misc]
 
     default_prompts_cls = AgenticPrompts
 
+    # ------------------------------------------------------------------ #
+    # Factory – mirror the Coder.create() helper so main() can instantiate
+    # ------------------------------------------------------------------ #
+    @classmethod
+    def create(cls, **kwargs) -> "AgenticCoder":  # noqa: D401
+        """
+        Lightweight factory used by main().
+
+        This mirrors aider.coders.base_coder.Coder.create() so that the
+        --agentic flag can drop-in replace the regular Coder without
+        changing the call-site.  All positional/keyword arguments are
+        forwarded directly to ``__init__``.
+        """
+        return cls(**kwargs)
+
     # --------------------------------------------------------------------- #
     # Agentic extensions – stubs for future functionality
     # --------------------------------------------------------------------- #
