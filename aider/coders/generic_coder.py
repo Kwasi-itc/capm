@@ -150,3 +150,32 @@ class GenericCoder:
 
         # Feed back into chat
         self.cur_messages.append({"role": "tool", "name": fn_name, "content": str(result)})
+
+    # ------------------------------------------------------------------ #
+    # Compatibility helpers                                              #
+    # ------------------------------------------------------------------ #
+    @classmethod
+    def create(cls, *, main_model, io, **kwargs):
+        """
+        Provide a factory identical to ``Coder.create`` so that external
+        call-sites (eg. main.py) can instantiate GenericCoder-based classes
+        without special-casing.
+
+        Parameters
+        ----------
+        main_model : aider.models.Model
+            The language-model wrapper to use for completions.
+        io : aider.io.InputOutput
+            The IO helper used for user interaction.
+
+        All additional keyword arguments are forwarded directly to ``__init__``.
+        """
+        return cls(main_model=main_model, io=io, **kwargs)
+
+    def show_announcements(self):
+        """
+        Minimal stub so callers can safely invoke ``coder.show_announcements()``.
+        Subclasses are expected to override this with richer status output.
+        """
+        if hasattr(self, "io") and hasattr(self.io, "tool_output"):
+            self.io.tool_output("GenericCoder ready.")
