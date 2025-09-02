@@ -4,14 +4,14 @@ hooks for future autonomous planning features.
 """
 from __future__ import annotations
 
-from .base_coder import Coder  # Use full-featured Coder as the parent
+from .generic_coder import GenericCoder  # Use full-featured Coder as the parent
 from .agentic_prompts import AgenticPrompts
 
 import json
 import re
 
 
-class AgenticCoder(Coder):  # type: ignore[misc]
+class AgenticCoder(GenericCoder):  # type: ignore[misc]
     """
     A coder that applies an agentic, plan-then-execute workflow.
 
