@@ -62,8 +62,32 @@ class GenericCoder:
         self.cur_messages.append({"role": "user", "content": user_message})
         yield from self._send(self.cur_messages)
 
-    def run(self, user_message: str) -> str:
-        "Blocking wrapper that returns the full assistant reply."
+    def run(self, user_message: str | None = None) -> str:
+        """
+        Blocking wrapper that returns the full assistant reply.
+
+        The method now accepts *user_message* as an optional argument so it
+        matches the signature expected by ``Coder.run``.  When *user_message*
+        is ``None`` we drop into a very small REPL so callers like *main.py*
+        can invoke ``coder.run()`` without parameters and still obtain an
+        interactive loop.
+        """
+        # Interactive fallback ------------------------------------------------
+        if user_message is None:
+            try:
+                while True:
+                    user_message = input("> ").strip()
+                    if not user_message:
+                        continue
+                    for chunk in self.run_stream(user_message):
+                        # Stream chunks directly to stdout
+                        if chunk:
+                            print(chunk, end="", flush=True)
+                    print()  # newline after assistant reply
+            except (EOFError, KeyboardInterrupt):
+                return ""
+            return ""
+        # Single ­message mode ----------------------------------------------
         for _ in self.run_stream(user_message):
             pass
         return self.partial_response_content
