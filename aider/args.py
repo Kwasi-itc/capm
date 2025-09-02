@@ -732,6 +732,12 @@ def get_parser(default_config_files, git_root):
         help="Specify the language to use in the chat (default: None, uses system settings)",
     )
     group.add_argument(
+        "--agentic",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Use the AgenticCoder with agentic prompts (default: False)",
+    )
+    group.add_argument(
         "--commit-language",
         metavar="COMMIT_LANGUAGE",
         default=None,
