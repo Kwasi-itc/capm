@@ -1,5 +1,7 @@
-"AgenticCoder – a GenericCoder subclass that uses AgenticPrompts and provides\n"
-"hooks for future autonomous planning features."
+"""
+AgenticCoder – a GenericCoder subclass that uses AgenticPrompts and provides
+hooks for future autonomous planning features.
+"""
 from __future__ import annotations
 
 from .generic_coder import GenericCoder  # Provided by the existing code-base
