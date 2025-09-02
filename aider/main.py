@@ -21,7 +21,7 @@ from prompt_toolkit.enums import EditingMode
 from aider import __version__, models, urls, utils
 from aider.analytics import Analytics
 from aider.args import get_parser
-from aider.coders import Coder, AgenticCoder
+from aider.coders import Coder
 from aider.coders.base_coder import UnknownEditFormat
 from aider.commands import Commands, SwitchCoder
 from aider.copypaste import ClipboardWatcher
@@ -964,13 +964,9 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
     analytics.event("auto_commits", enabled=bool(args.auto_commits))
 
     try:
-        coder_cls = AgenticCoder if args.agentic else Coder
-        if not hasattr(coder_cls, "create"):
-            io.tool_warning(
-                "Selected coder does not support 'create', falling back to default Coder."
-            )
-            coder_cls = Coder
-        coder = coder_cls.create(
+        if args.agentic:
+            io.tool_warning("--agentic flag is deprecated; using default Coder.")
+        coder = Coder.create(
             main_model=main_model,
             edit_format=args.edit_format,
             io=io,
