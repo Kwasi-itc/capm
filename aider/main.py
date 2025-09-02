@@ -965,6 +965,11 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
 
     try:
         coder_cls = AgenticCoder if args.agentic else Coder
+        if not hasattr(coder_cls, "create"):
+            io.tool_warning(
+                "Selected coder does not support 'create', falling back to default Coder."
+            )
+            coder_cls = Coder
         coder = coder_cls.create(
             main_model=main_model,
             edit_format=args.edit_format,
