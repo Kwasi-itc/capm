@@ -53,7 +53,6 @@ from aider.tools.base_tool import ToolError
 
 from ..dump import dump  # noqa: F401
 from .chat_chunks import ChatChunks
-from .generic_coder import GenericCoder
 
 
 class UnknownEditFormat(ValueError):
@@ -88,7 +87,7 @@ all_fences = [
 ]
 
 
-class Coder(GenericCoder):
+class Coder:
     abs_fnames = None
     abs_read_only_fnames = None
     repo = None
