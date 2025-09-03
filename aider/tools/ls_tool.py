@@ -25,7 +25,7 @@ class LsTool(BaseTool):
     # ---------------- metadata shown to the LLM -------------------
     name = "ls"
     description = (
-        "Recursively list files & directories for an ABSOLUTE path. "
+        "Recursively list files & directories for a path (absolute or relative). "
         "Prefer the glob / grep tools when you already know patterns."
     )
     parameters: Dict[str, Any] = {
@@ -33,7 +33,7 @@ class LsTool(BaseTool):
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Absolute directory path to list",
+                "description": "Directory path to list (absolute or relative)",
             }
         },
         "required": ["path"],
@@ -113,9 +113,8 @@ class LsTool(BaseTool):
 
     # ---------------- main entry point ----------------------------
     def run(self, *, path: str) -> str:
-        if not os.path.isabs(path):
-            raise ToolError("The path argument must be ABSOLUTE, not relative")
-
+        # Accept relative paths by resolving them against the current working
+        # directory. This mirrors typical shell ``ls`` behaviour.
         root = Path(path).expanduser().resolve()
         if not root.exists():
             raise ToolError(f"{root} does not exist")
