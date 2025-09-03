@@ -1211,14 +1211,6 @@ class Coder:
 
     def fmt_system_prompt(self, prompt):
         final_reminders = []
-
-        # Inject the optional *agentic* prompt if the loaded prompt-set
-        # defines it.  This keeps the codebase free of the AgenticCoder
-        # subclass while still enabling the enhanced instructions.
-        agentic_prompt = getattr(self.gpt_prompts, "agentic_prompt", None)
-        if agentic_prompt:
-            final_reminders.append(agentic_prompt)
-
         if self.main_model.lazy:
             final_reminders.append(self.gpt_prompts.lazy_prompt)
         if self.main_model.overeager:
