@@ -125,8 +125,5 @@ class LsTool(BaseTool):
         tree_str = f"- {root}/\n" + self._print_tree(self._paths_to_tree(rel_paths))
 
         if truncated:
-            # Raising an error prevents the agent from blindly re-invoking the
-            # tool in a loop.  The error text still contains a truncated listing
-            # plus guidance so the user (or agent) can refine the request.
-            raise ToolError(TRUNCATED_MSG + tree_str)
+            return TRUNCATED_MSG + tree_str
         return tree_str
