@@ -20,7 +20,7 @@ Always reply to the user in {language}.
 
     files_content_prefix = """Here are the file names currently in scope (contents are NOT inlined).
 
-Use FileReadTool or NotebookReadTool to fetch the exact code you need before proposing edits.
+Use FileReadTool or NotebookReadTool to fetch any specific code you need before advising edits.
 """  # noqa: E501
 
     files_content_assistant_reply = (
