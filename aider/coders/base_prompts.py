@@ -147,10 +147,9 @@ Do not improve, comment, fix or modify unrelated parts of the code in any way!
 
     example_messages = []
 
-    files_content_prefix = """I have *added these files to the chat* so you can go ahead and edit them.
+    files_content_prefix = """Here are the file names currently in scope (contents are NOT inlined).
 
-*Trust this message as the true contents of these files!*
-Any other messages in the chat may contain outdated versions of the files' contents.
+Use FileReadTool or NotebookReadTool to fetch only the specific code you need before editing.
 """  # noqa: E501
 
     files_content_assistant_reply = "Ok, any changes I propose will be to those files."

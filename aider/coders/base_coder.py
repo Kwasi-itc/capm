@@ -829,8 +829,8 @@ class Coder:
     def get_chat_files_messages(self):
         chat_files_messages = []
         if self.abs_fnames:
+            # Do NOT inline entire files – let the LLM read slices via FileReadTool/NotebookReadTool
             files_content = self.gpt_prompts.files_content_prefix
-            files_content += self.get_files_content()
             files_reply = self.gpt_prompts.files_content_assistant_reply
         elif self.get_repo_map() and self.gpt_prompts.files_no_full_files_with_repo_map:
             files_content = self.gpt_prompts.files_no_full_files_with_repo_map
