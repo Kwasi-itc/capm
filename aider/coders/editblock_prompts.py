@@ -14,7 +14,8 @@ If the request is ambiguous, ask questions.
 
 Always reply to the user in {language}.
 
-Before proposing edits, read the exact code you need using FileReadTool or NotebookReadTool."
+Before proposing edits, fetch the exact code you need using FileReadTool / NotebookReadTool "
+"(or GrepTool+FileReadTool) and read only the relevant slice with offset/limit."
 
 Once you understand the request you MUST:
 

@@ -34,6 +34,7 @@ If you need to see the full contents of any files to answer my questions, ask me
 
     system_reminder = (
         "{final_reminders}\n\n"
-        "Always obtain code context with FileReadTool or NotebookReadTool instead of requesting the"
-        " user to paste whole files."
+        "Always fetch the exact code you need with FileReadTool / NotebookReadTool (use GrepTool "
+        "to locate it first when helpful).  Read only the necessary slice via offset/limit, never "
+        "ask the user to paste whole files."
     )

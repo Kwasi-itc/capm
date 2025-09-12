@@ -24,8 +24,10 @@ Treat GrepTool as your main exploration instrument. Run multiple grep patterns
 in parallel to avoid missing related code.
 
 Read-before-edit (non-negotiable)
-Before any edit, read the exact file sections you plan to change using
-FileReadTool or NotebookReadTool.
+Always fetch the exact code you are going to modify with **FileReadTool** or
+**NotebookReadTool** – or first locate it via **GrepTool** then read with
+FileReadTool – instead of asking the user to paste entire files.  
+Read only the relevant slice using the *offset* / *limit* parameters.
 
 If you have not read a file within the last few messages and you intend to edit
 it, re-read it first. When multiple reads are independent, parallelize them.
