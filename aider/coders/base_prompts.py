@@ -156,7 +156,9 @@ Use FileReadTool or NotebookReadTool to fetch only the specific code you need be
 
     files_content_assistant_reply = "Ok, any changes I propose will be to those files."
 
-    files_no_full_files = "I am not sharing any files that you can edit yet."
+    files_no_full_files = (
+        "No file contents are shared by default.  Use FileReadTool when you need code context."
+    )
 
     files_no_full_files_with_repo_map = """Don't try and edit any existing code without asking me to add the files to the chat!
 Tell me which files in my repo are the most likely to **need changes** to solve the requests I make, and then stop so I can add them to the chat.

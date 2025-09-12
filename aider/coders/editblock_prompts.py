@@ -170,6 +170,8 @@ If you want to put code in a new file, use a *SEARCH/REPLACE block* with:
     go_ahead_tip = """If the user just says something like "ok" or "go ahead" or "do that" they probably want you to make SEARCH/REPLACE blocks for the code changes you just proposed.
 The user will say when they've applied your edits. If they haven't explicitly confirmed the edits have been applied, they probably want proper SEARCH/REPLACE blocks.
 
+Use FileReadTool first if you need the exact lines you plan to modify.
+
 """
 
     shell_cmd_prompt = shell.shell_cmd_prompt

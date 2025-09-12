@@ -18,16 +18,18 @@ Always reply to the user in {language}.
 
     example_messages = []
 
-    files_content_prefix = """I have *added these files to the chat* so you see all of their contents.
-*Trust this message as the true contents of the files!*
-Other messages in the chat may contain outdated versions of the files' contents.
+    files_content_prefix = """Here are the file names currently in scope (contents are NOT inlined).
+
+Use FileReadTool or NotebookReadTool to fetch the exact code you need before proposing edits.
 """  # noqa: E501
 
     files_content_assistant_reply = (
         "Ok, I will use that as the true, current contents of the files."
     )
 
-    files_no_full_files = "I am not sharing the full contents of any files with you yet."
+    files_no_full_files = (
+        "No file contents are shared by default.  Call FileReadTool if you need code context."
+    )
 
     files_no_full_files_with_repo_map = ""
     files_no_full_files_with_repo_map_reply = ""
@@ -37,4 +39,8 @@ Here are summaries of some files present in my git repo.
 If you need to see the full contents of any files to answer my questions, ask me to *add them to the chat*.
 """
 
-    system_reminder = ""
+    system_reminder = (
+        "Always fetch the exact code you are going to modify with FileReadTool / NotebookReadTool "
+        "(or GrepTool+FileReadTool) instead of asking the user to paste whole files. "
+        "Read only the relevant slice (offset/limit)."
+    )
