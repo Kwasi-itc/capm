@@ -1472,6 +1472,16 @@ class Coder:
         if self.verbose:
             utils.show_messages(messages, functions=self.functions)
 
+            # DEBUG: log the exact prompt that is about to be sent to the LLM
+            # This prints the nicely formatted markdown version to the same stream
+            # that other tool-output messages use, enabling easy inspection.
+            self.io.tool_output(
+                "\n----- PROMPT SENT TO LLM -----\n"
+                + format_messages(messages)
+                + "\n--------------------------------",
+                log_only=False,   # set to True to keep it only in the log file
+            )
+
         self.multi_response_content = ""
         if self.show_pretty():
             self.waiting_spinner = WaitingSpinner("Waiting for " + self.main_model.name)
