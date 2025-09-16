@@ -81,5 +81,6 @@ def test_sorted_by_mtime(tmp_path: Path):
     newest = make_file(tmp_path, "new.txt", b"hit", mtime_shift=5)
 
     out = GrepTool().run(pattern="hit", path=str(tmp_path))
-    first_path = out.splitlines()[1]  # line 0 is header
+    first_entry = out.splitlines()[1]  # line 0 is header
+    first_path = first_entry.split(":", 1)[0]
     assert first_path == newest.relative_to(tmp_path).as_posix()

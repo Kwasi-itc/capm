@@ -25,8 +25,9 @@ class GrepTool(BaseTool):
     name = "grep"
     description = (
         "Search file contents using a regular-expression pattern. "
-        "If the pattern is not valid regex it is searched as a literal substring. "
-        "Returns matching file paths (sorted by modification time)."
+        "If the pattern is not valid regex an error is raised. "
+        "Returns matching file paths together with the first matching line and its "
+        "line number (sorted by modification time)."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -61,22 +62,26 @@ class GrepTool(BaseTool):
     def run(self, *, pattern: str, path: str | None = None, include: str | None = None) -> str:
         """
         Search for ``pattern`` (regex) inside files under ``path`` (or CWD).
-        Uses mmap for efficient binary scanning.  Results are returned as a
-        '\n'-separated list of relative paths sorted by newest-first mtime.
+
+        Uses mmap for efficient binary scanning.  Each matching result is formatted as
+
+            ``<relative_path>:<line_number>: <first_matching_line>``
+
+        Results are '\n'-separated and sorted by newest-first file mtime.
         """
         try:
-            # Compile as bytes because mmap yields bytes
-            regex = re.compile(pattern.encode("utf-8"))
-        except re.error:
-            # Fall back to a *literal* search when the pattern is not valid regex
-            regex = re.compile(re.escape(pattern).encode("utf-8"))
+            # Compile both byte-level and str-level regexes
+            bytes_regex = re.compile(pattern.encode("utf-8"))
+            str_regex = re.compile(pattern)
+        except re.error as e:
+            raise ToolError(f"Invalid regular-expression pattern: {pattern!r} ({e})")
 
         root = Path(path or os.getcwd()).expanduser().resolve()
         if not root.is_dir():
             raise ToolError(f"Search path {root} is not a directory")
 
         start = time.time()
-        matches: list[tuple[str, float]] = []  # (relative_path, mtime)
+        matches: list[tuple[str, float, int, str]] = []  # (rel_path, mtime, line_no, line_text)
 
         for file_path in self._iter_files(root, include):
             if not file_path.is_file():
@@ -92,20 +97,34 @@ class GrepTool(BaseTool):
                         # Skip likely binary files quickly
                         if mm.find(b"\0", 0, 1024) != -1:
                             continue
-                        if regex.search(mm):
+                        if bytes_regex.search(mm):
+                            # Find first matching line (text mode)
+                            line_no = 0
+                            first_line = ""
+                            try:
+                                with open(file_path, "r", encoding="utf-8", errors="ignore") as txt_f:
+                                    for i, line in enumerate(txt_f, 1):
+                                        if str_regex.search(line):
+                                            line_no = i
+                                            first_line = line
+                                            break
+                            except OSError:
+                                pass
+
                             rel_path = str(file_path.relative_to(root))
-                            matches.append((rel_path, file_stat.st_mtime))
+                            matches.append((rel_path, file_stat.st_mtime, line_no, first_line))
             except (ValueError, OSError):
                 # Ignore unreadable or special files
                 continue
 
         # Newest-first
         matches.sort(key=lambda item: item[1], reverse=True)
-        sorted_paths = [p for p, _ in matches]
 
         duration_ms = int((time.time() - start) * 1000)
-        num_files = len(sorted_paths)
-        summary_lines = sorted_paths[:MAX_RESULTS]
+        num_files = len(matches)
+        summary_lines = [
+            f"{p}:{ln}: {lt.strip()}" for p, _, ln, lt in matches[:MAX_RESULTS]
+        ]
 
         header = f"Found {num_files} file{'s' if num_files != 1 else ''} in {duration_ms}ms"
         if num_files > MAX_RESULTS:
