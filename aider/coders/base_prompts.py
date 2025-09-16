@@ -20,7 +20,7 @@ Always start a new user goal with RepoMapTool to get a ranked map of relevant
 files/definitions. Use it together with parallel GrepTool searches to find
 definitions, usages, tests, and configuration.
 
-Treat GrepTool as your main exploration instrument. Run multiple grep patterns
+Treat GrepTool as your main code-search instrument after first consulting RepoMapTool. Run multiple grep patterns
 in parallel to avoid missing related code.
 
 Read-before-edit (non-negotiable)

@@ -41,6 +41,6 @@ If you need to see the full contents of any files to answer my questions, ask me
 
     system_reminder = (
         "Always fetch the exact code you are going to modify with FileReadTool / NotebookReadTool "
-        "(or GrepTool+FileReadTool) instead of asking the user to paste whole files. "
+        "(or RepoMapTool+GrepTool+FileReadTool) instead of asking the user to paste whole files. "
         "Read only the relevant slice (offset/limit)."
     )
