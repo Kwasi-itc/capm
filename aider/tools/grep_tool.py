@@ -19,8 +19,18 @@ from .base_tool import BaseTool, ToolError
 
 MAX_RESULTS = 100
 
-# Directories that are completely ignored during the search
-EXCLUDE_DIRS = {"build", "venv", ".venv"}
+# Directories that are completely ignored during the search.
+# This includes common build artefacts and dependency/virtual-env folders
+# across many languages.
+EXCLUDE_DIRS = {
+    "build",
+    "dist",
+    "out",
+    "target",
+    "node_modules",
+    "venv",
+    ".venv",
+}
 
 
 class GrepTool(BaseTool):
@@ -31,7 +41,8 @@ class GrepTool(BaseTool):
         "If the pattern is not valid regex an error is raised. "
         "Returns matching file paths together with the first matching line and its "
         "line number (sorted by modification time). "
-        "Common build and virtual-environment directories are automatically excluded."
+        "Common build, dependency and virtual-environment directories "
+        "(e.g. node_modules, dist, target, venv) are automatically excluded."
     )
     parameters: Dict[str, Any] = {
         "type": "object",

@@ -90,8 +90,10 @@ def test_excluded_dirs(tmp_path: Path):
     # Files inside build and virtual-env directories should be ignored
     (tmp_path / "build").mkdir()
     (tmp_path / "venv").mkdir()
+    (tmp_path / "node_modules").mkdir()
     (tmp_path / "build" / "hit.txt").write_text("needle")
     (tmp_path / "venv" / "hit.txt").write_text("needle")
+    (tmp_path / "node_modules" / "hit.txt").write_text("needle")
     (tmp_path / "root.txt").write_text("needle")
 
     out = GrepTool().run(pattern="needle", path=str(tmp_path))
@@ -99,3 +101,4 @@ def test_excluded_dirs(tmp_path: Path):
     assert "root.txt" in out
     assert "build/hit.txt" not in out
     assert "venv/hit.txt" not in out
+    assert "node_modules/hit.txt" not in out
