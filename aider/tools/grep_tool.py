@@ -19,6 +19,9 @@ from .base_tool import BaseTool, ToolError
 
 MAX_RESULTS = 100
 
+# Directories that are completely ignored during the search
+EXCLUDE_DIRS = {"build", "venv", ".venv"}
+
 
 class GrepTool(BaseTool):
     # -------- metadata sent to the LLM ---------------------------------
@@ -27,7 +30,8 @@ class GrepTool(BaseTool):
         "Search file contents using a regular-expression pattern. "
         "If the pattern is not valid regex an error is raised. "
         "Returns matching file paths together with the first matching line and its "
-        "line number (sorted by modification time)."
+        "line number (sorted by modification time). "
+        "Common build and virtual-environment directories are automatically excluded."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -53,10 +57,12 @@ class GrepTool(BaseTool):
     @staticmethod
     def _iter_files(root: Path, include_glob: str | None) -> List[Path]:
         """Yield Path objects under root matching the glob (or all files if glob is None)."""
-        if include_glob:
-            yield from root.rglob(include_glob)
-        else:
-            yield from root.rglob("*")
+        paths = root.rglob(include_glob) if include_glob else root.rglob("*")
+        for p in paths:
+            # Skip any paths that contain an excluded directory component
+            if any(part in EXCLUDE_DIRS for part in p.parts):
+                continue
+            yield p
 
     # -------- main execution --------------------------------------------
     def run(self, *, pattern: str, path: str | None = None, include: str | None = None) -> str:

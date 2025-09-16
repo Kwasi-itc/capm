@@ -84,3 +84,18 @@ def test_sorted_by_mtime(tmp_path: Path):
     first_entry = out.splitlines()[1]  # line 0 is header
     first_path = first_entry.split(":", 1)[0]
     assert first_path == newest.relative_to(tmp_path).as_posix()
+
+
+def test_excluded_dirs(tmp_path: Path):
+    # Files inside build and virtual-env directories should be ignored
+    (tmp_path / "build").mkdir()
+    (tmp_path / "venv").mkdir()
+    (tmp_path / "build" / "hit.txt").write_text("needle")
+    (tmp_path / "venv" / "hit.txt").write_text("needle")
+    (tmp_path / "root.txt").write_text("needle")
+
+    out = GrepTool().run(pattern="needle", path=str(tmp_path))
+    # Only the root file should appear in the output
+    assert "root.txt" in out
+    assert "build/hit.txt" not in out
+    assert "venv/hit.txt" not in out
