@@ -49,8 +49,9 @@ class RepoMapTool(BaseTool):
     name: str = "intelligent_repomap"
     description: str = (
         "Generates an intelligent repository map by building a code graph and using "
-        "PageRank to find the most relevant files and symbols. Use 'focus_files' to "
-        "center the map around specific areas of interest."
+        "PageRank to find the most relevant files and symbols. When 'focus_files' is "
+        "supplied, the output is restricted to those files (if they contain ranked "
+        "definitions) so the map stays tightly focused on the area of interest."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -335,6 +336,12 @@ class RepoMapTool(BaseTool):
         
         graph = self._build_code_graph(all_files)
         ranked_tags = self._rank_definitions(graph, focus_files_rel)
+
+        # When focus files are provided, keep only tags from those files
+        if focus_files_rel:
+            focus_tags = [t for t in ranked_tags if t.rel_fname in focus_files_rel]
+            if focus_tags:  # Only replace if we actually found tags in the focus files
+                ranked_tags = focus_tags
 
         # Binary search to find the optimal number of tags for the token limit
         low, high = 0, len(ranked_tags)
