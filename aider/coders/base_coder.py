@@ -1217,6 +1217,12 @@ class Coder:
             final_reminders.append(self.gpt_prompts.overeager_prompt)
         
         final_reminders.append("Reply in English.\n")
+        # Guidance for tool invocation: avoid redundant repeat calls
+        final_reminders.append(
+            "When deciding whether to call a tool, never invoke the same tool with the "
+            "same arguments in consecutive assistant messages. Call each tool at most "
+            "once, wait for the user or new information before calling it again."
+        )
 
         platform_text = self.get_platform_info()
 
