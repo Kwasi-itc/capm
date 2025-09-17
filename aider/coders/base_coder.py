@@ -1598,11 +1598,22 @@ class Coder:
                         "name": fn_name,
                         "content": output
                     })
-                    
+
+                    # ------------------------------------------------------------------
+                    # Prevent the model from issuing an identical tool call immediately
+                    # after receiving the tool result. We temporarily hide all tool
+                    # schemas from the next round trip and restore them afterwards.
+                    # ------------------------------------------------------------------
+                    backup_functions = self.functions
+                    self.functions = []
+
                     # Clear the pending call & recursively continue the conversation.
                     self.partial_response_function_call = {}
                     self.partial_response_content = ""
                     yield from self.send_message("")
+
+                    # Re-enable tool calls for future user turns.
+                    self.functions = backup_functions
                     return
                 except ToolError as e:
                     self.cur_messages.append({
