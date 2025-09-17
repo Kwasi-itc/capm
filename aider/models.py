@@ -52,6 +52,7 @@ gpt-4-vision-preview
 gpt-4-1106-vision-preview
 gpt-4o-mini
 gpt-4o-mini-2024-07-18
+gpt-5
 gpt-3.5-turbo
 gpt-3.5-turbo-0301
 gpt-3.5-turbo-0613
@@ -88,6 +89,7 @@ MODEL_ALIASES = {
     "4": "gpt-4-0613",
     "4o": "gpt-4o",
     "4-turbo": "gpt-4-1106-preview",
+    "5": "gpt-5",
     "35turbo": "gpt-3.5-turbo",
     "35-turbo": "gpt-3.5-turbo",
     "3": "gpt-3.5-turbo",
@@ -479,6 +481,12 @@ class Model(ModelSettings):
             self.use_repo_map = True
             self.send_undo_reply = True
             self.examples_as_sys_msg = True
+            return  # <--
+
+        if "gpt-5" in model:
+            self.edit_format = "diff"
+            self.use_repo_map = True
+            self.send_undo_reply = True
             return  # <--
 
         if "gpt-4-turbo" in model or ("gpt-4-" in model and "-preview" in model):
