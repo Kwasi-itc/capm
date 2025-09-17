@@ -1473,12 +1473,12 @@ class Coder:
             utils.show_messages(messages, functions=self.functions)
 
         # Log the exact prompt that is about to be sent to the LLM
-        self.io.assistant_output(
-            "\n----- PROMPT SENT TO LLM -----\n"
-            + format_messages(messages)
-            + "\n--------------------------------",
-            pretty=self.show_pretty(),
-        )
+        # self.io.assistant_output(
+        #     "\n----- PROMPT SENT TO LLM -----\n"
+        #     + format_messages(messages)
+        #     + "\n--------------------------------",
+        #     pretty=self.show_pretty(),
+        # )
 
         self.multi_response_content = ""
         if self.show_pretty():
