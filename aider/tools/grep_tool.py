@@ -94,13 +94,21 @@ class GrepTool(BaseTool):
             raise ToolError(f"Invalid regular-expression pattern: {pattern!r} ({e})")
 
         root = Path(path or os.getcwd()).expanduser().resolve()
-        if not root.is_dir():
-            raise ToolError(f"Search path {root} is not a directory")
+
+        # Determine whether we were given a single file or a directory
+        if root.is_file():
+            search_files = [root]
+            root_dir = root.parent
+        elif root.is_dir():
+            root_dir = root
+            search_files = list(self._iter_files(root_dir, include))
+        else:
+            raise ToolError(f"Search path {root} does not exist")
 
         start = time.time()
         matches: list[tuple[str, float, int, str]] = []  # (rel_path, mtime, line_no, line_text)
 
-        for file_path in self._iter_files(root, include):
+        for file_path in search_files:
             if not file_path.is_file():
                 continue
 
@@ -128,7 +136,7 @@ class GrepTool(BaseTool):
                             except OSError:
                                 pass
 
-                            rel_path = str(file_path.relative_to(root))
+                            rel_path = str(file_path.relative_to(root_dir))
                             matches.append((rel_path, file_stat.st_mtime, line_no, first_line))
             except (ValueError, OSError):
                 # Ignore unreadable or special files
