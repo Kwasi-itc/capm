@@ -1245,6 +1245,12 @@ class Coder:
             "Keep only ONE task marked in_progress at a time."
         )
 
+        # Encourage using WebSearch for up-to-date information
+        final_reminders.append(
+            "If you need current information beyond your knowledge cutoff, use the WebSearch "
+            "tool to retrieve fresh results before answering."
+        )
+
         # Guidance for tool invocation: avoid redundant repeat calls
         final_reminders.append(
             "**CRITICAL RULE**: You MUST check the conversation history before calling a tool. "
