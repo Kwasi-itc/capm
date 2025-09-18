@@ -1630,10 +1630,25 @@ class Coder:
                         "content": output
                     })
 
-                    # Clear the pending call & recursively continue the conversation.
+                    # Build a follow-up user prompt that includes the tool output and
+                    # instructs the LLM to use it to answer the original request.
+                    orig_request = next(
+                        (m["content"] for m in reversed(self.cur_messages) if m["role"] == "user"),
+                        ""
+                    )
+                    follow_up = (
+                        f"You requested to call the tool `{fn_name}` to help with the user's "
+                        f"request.\n\n"
+                        f"Tool output:\n"
+                        f"{self.fence[0]}\n{output}\n{self.fence[1]}\n\n"
+                        f"Now, using this information, please provide a comprehensive answer to "
+                        f"the original request:\n\"{orig_request}\""
+                    )
+
+                    # Clear the pending call and continue the dialogue with the follow-up prompt.
                     self.partial_response_function_call = {}
                     self.partial_response_content = ""
-                    yield from self.send_message("")
+                    yield from self.send_message(follow_up)
                     return
                 except ToolError as e:
                     self.cur_messages.append({
