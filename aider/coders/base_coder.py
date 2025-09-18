@@ -379,6 +379,11 @@ class Coder:
         # we suppress sending it again on subsequent turns.
         self.chat_files_rules_sent: bool = False
 
+        # Remember if the *full* system prompt (which contains the SEARCH/REPLACE
+        # editing rules) has already been transmitted.  After the first turn we
+        # omit it to avoid repeating the large rules block on every request.
+        self.system_prompt_sent: bool = False
+
         self.suggest_shell_commands = suggest_shell_commands
         self.detect_urls = detect_urls
 
@@ -1317,15 +1322,22 @@ class Coder:
 
         chunks = ChatChunks()
 
-        if self.main_model.use_system_prompt:
-            chunks.system = [
-                dict(role="system", content=main_sys),
-            ]
+        # Only include the big system prompt (with the SEARCH/REPLACE rules)
+        # the very first time we talk to the model.  Subsequent turns get a
+        # minimal system section – the previous prompt is already in the
+        # conversation history so we don't need to resend it.
+        if not self.system_prompt_sent:
+            if self.main_model.use_system_prompt:
+                chunks.system = [dict(role="system", content=main_sys)]
+            else:
+                chunks.system = [
+                    dict(role="user", content=main_sys),
+                    dict(role="assistant", content="Ok."),
+                ]
+            self.system_prompt_sent = True
         else:
-            chunks.system = [
-                dict(role="user", content=main_sys),
-                dict(role="assistant", content="Ok."),
-            ]
+            # No additional system prompt after the first round
+            chunks.system = []
 
         chunks.examples = example_messages
 
