@@ -20,7 +20,7 @@ import time
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
-from duckduckgo_search import ddgs  # type: ignore
+from ddgs import DDGS  # type: ignore
 
 from aider.tools.base_tool import BaseTool, ToolError
 
@@ -100,17 +100,17 @@ class WebSearchTool(BaseTool):
             return self._cache[cache_key][1]
 
         try:
-            # Use the newer ``ddgs`` context manager recommended by the library
-            with ddgs() as search:
-                raw_results = list(
-                    search.text(
-                        query,
-                        region="us-en",
-                        safesearch="moderate",
-                        timelimit="y",  # last year
-                        max_results=self.MAX_RESULTS * 2,
-                    )
+            # Use the ``ddgs`` library (DDGS class) – no context-manager required
+            ddg = DDGS()
+            raw_results = list(
+                ddg.text(
+                    query,
+                    region="us-en",
+                    safesearch="moderate",
+                    timelimit="y",  # last year
+                    max_results=self.MAX_RESULTS * 2,
                 )
+            )
         except Exception as err:
             raise ToolError(f"Search failed: {err}") from err
 
