@@ -848,24 +848,15 @@ class Coder:
                     dict(role="assistant", content="Ok."),
                 ]
             return []
-        if self.abs_fnames:
-            # Do NOT inline entire files – let the LLM read slices via FileReadTool/NotebookReadTool
-            files_content = self.gpt_prompts.files_content_prefix
-            files_reply = self.gpt_prompts.files_content_assistant_reply
-        elif self.get_repo_map() and self.gpt_prompts.files_no_full_files_with_repo_map:
-            files_content = self.gpt_prompts.files_no_full_files_with_repo_map
-            files_reply = self.gpt_prompts.files_no_full_files_with_repo_map_reply
-        else:
-            files_content = self.gpt_prompts.files_no_full_files
-            files_reply = "Ok."
+        # We no longer inject SEARCH/REPLACE editing rules as separate user
+        # messages.  Any file-editing guidance should live in the single main
+        # system prompt that is sent once at session start.
+        files_content = None
+        files_reply = None
 
-        if files_content:
-            chat_files_messages += [
-                dict(role="user", content=files_content),
-                dict(role="assistant", content=files_reply),
-            ]
-            # Mark that we already sent the rules so we don't repeat them
-            self.chat_files_rules_sent = True
+        # Previously we injected the SEARCH/REPLACE instructions here. They are
+        # now part of the main system prompt, so we skip adding any extra
+        # user/assistant exchange at this step.
 
         images_message = self.get_images_message(self.abs_fnames)
         if images_message is not None:
