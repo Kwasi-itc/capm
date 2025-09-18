@@ -122,8 +122,6 @@ class Coder:
     chat_language = None
     commit_language = None
     file_watcher = None
-    # Stores the most recently assembled prompt message list.
-    last_prompt_messages = []
     # Tracks files and other context elements automatically dropped to stay within
     # the model's token budget for the current Coder session.
     dropped_auto_ctx = set()
@@ -364,8 +362,6 @@ class Coder:
         self.auto_context = auto_context
         # Reset tracker each new coder instance
         self.dropped_auto_ctx = set()
-        # Initialise prompt cache
-        self.last_prompt_messages = []
 
         self.ignore_mentions = ignore_mentions
         if not self.ignore_mentions:
@@ -1375,9 +1371,6 @@ class Coder:
 
     def format_messages(self):
         chunks = self.format_chat_chunks()
-        # Cache the full list of messages that will be sent to the LLM so
-        # callers (tests, debug commands, etc.) can inspect them later.
-        self.last_prompt_messages = chunks.all_messages()
         if self.add_cache_headers:
             chunks.add_cache_control_headers()
 
@@ -2279,19 +2272,6 @@ class Coder:
     # ------------------------------------------------------------------
     # Debug / inspection helpers
     # ------------------------------------------------------------------
-    def get_last_prompt_messages(self):
-        """
-        Return the most recently assembled list of message dictionaries that
-        were sent (or are about to be sent) to the LLM.
-        """
-        return self.last_prompt_messages
-
-    def get_last_prompt_string(self):
-        """
-        Return the cached prompt list formatted as plain text, mimicking the
-        way prompts are logged elsewhere in the code base.
-        """
-        return format_messages(self.last_prompt_messages)
 
     def get_rel_fname(self, fname):
         try:
