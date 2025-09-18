@@ -93,14 +93,33 @@ class WebFetchTool(BaseTool):
         except Exception as err:
             raise ToolError(f"Network error while fetching {url}: {err}") from err
 
-        # Handle (single-hop) redirects explicitly so the caller can decide
+        # Handle redirects:
+        #   • If the redirect stays on the SAME host (eg adds a trailing slash)
+        #     we transparently follow it once.
+        #   • If it moves to a DIFFERENT host we surface it to the LLM so it can
+        #     explicitly re-call the tool with the new URL (keeps spec behaviour).
         if 300 <= resp.status_code < 400 and "Location" in resp.headers:
             redirect_url = resp.headers["Location"]
-            # Absolute or relative?
+
+            # Build absolute URL when the Location header is relative
+            orig = urlparse(url)
             if redirect_url.startswith("/"):
-                parsed = urlparse(url)
-                redirect_url = f"{parsed.scheme}://{parsed.netloc}{redirect_url}"
-            raise ToolError(f"redirect:{redirect_url}")
+                redirect_url = f"{orig.scheme}://{orig.netloc}{redirect_url}"
+
+            dest = urlparse(redirect_url)
+            same_host = dest.netloc == orig.netloc
+
+            if same_host:
+                # Follow the redirect once, still without enabling auto-redirects
+                url = redirect_url
+                resp = requests.get(
+                    url,
+                    timeout=15,
+                    allow_redirects=False,
+                    headers={"User-Agent": "aider-webfetch/1.0"},
+                )
+            else:
+                raise ToolError(f"redirect:{redirect_url}")
 
         if resp.status_code != 200:
             raise ToolError(f"HTTP {resp.status_code} when fetching {url}")
