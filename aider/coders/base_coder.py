@@ -1237,6 +1237,14 @@ class Coder:
             final_reminders.append(self.gpt_prompts.overeager_prompt)
         
         final_reminders.append("Reply in English.\n")
+
+        # Encourage proactive task tracking with TodoWrite
+        final_reminders.append(
+            "When a request involves multiple non-trivial steps, proactively call the "
+            "TodoWrite tool to create or update a todo list before starting work. "
+            "Keep only ONE task marked in_progress at a time."
+        )
+
         # Guidance for tool invocation: avoid redundant repeat calls
         final_reminders.append(
             "**CRITICAL RULE**: You MUST check the conversation history before calling a tool. "
