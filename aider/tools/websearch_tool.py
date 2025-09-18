@@ -20,7 +20,7 @@ import time
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
-from duckduckgo_search import DDGS  # type: ignore
+from duckduckgo_search import ddgs  # type: ignore
 
 from aider.tools.base_tool import BaseTool, ToolError
 
@@ -100,9 +100,10 @@ class WebSearchTool(BaseTool):
             return self._cache[cache_key][1]
 
         try:
-            with DDGS() as ddgs:
+            # Use the newer ``ddgs`` context manager recommended by the library
+            with ddgs() as search:
                 raw_results = list(
-                    ddgs.text(
+                    search.text(
                         query,
                         region="us-en",
                         safesearch="moderate",
