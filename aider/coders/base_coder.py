@@ -1479,12 +1479,12 @@ class Coder:
             utils.show_messages(messages, functions=self.functions)
 
         # Log the exact prompt that is about to be sent to the LLM
-        self.io.assistant_output(
-            "\n----- PROMPT SENT TO LLM -----\n"
-            + format_messages(messages)
-            + "\n--------------------------------",
-            pretty=self.show_pretty(),
-        )
+        # self.io.assistant_output(
+        #     "\n----- PROMPT SENT TO LLM -----\n"
+        #     + format_messages(messages)
+        #     + "\n--------------------------------",
+        #     pretty=self.show_pretty(),
+        # )
 
         self.multi_response_content = ""
         if self.show_pretty():
@@ -1592,10 +1592,10 @@ class Coder:
                     output = tool.handle_call(args_json)
 
                     # Show the tool's output to the user just like we show the call itself
-                    self.io.assistant_output(
-                        self.io.format_tool_result(fn_name, output),
-                        pretty=self.show_pretty(),
-                    )
+                    # self.io.assistant_output(
+                    #     self.io.format_tool_result(fn_name, output),
+                    #     pretty=self.show_pretty(),
+                    # )
                     # Comment this to remove tool call output...
 
                     # Feed the tool result back into the dialogue so the model can use it.
