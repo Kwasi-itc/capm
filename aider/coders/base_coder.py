@@ -1224,9 +1224,10 @@ class Coder:
         final_reminders.append("Reply in English.\n")
         # Guidance for tool invocation: avoid redundant repeat calls
         final_reminders.append(
-            "When deciding whether to call a tool, never invoke the same tool with the "
-            "same arguments in consecutive assistant messages. Call each tool at most "
-            "once, wait for the user or new information before calling it again."
+            "**CRITICAL RULE**: You MUST check the conversation history before calling a tool. "
+            "If you have already invoked the exact same tool with the exact same arguments for "
+            "the current user request, DO NOT call it again. Instead, you MUST use the information "
+            "you already received from that tool call to formulate your final answer."
         )
 
         platform_text = self.get_platform_info()
