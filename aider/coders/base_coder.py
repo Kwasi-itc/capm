@@ -362,6 +362,9 @@ class Coder:
         self.auto_context = auto_context
         # Reset tracker each new coder instance
         self.dropped_auto_ctx = set()
+        # Cache to track tool calls made in the current conversational turn
+        # (tool name + arguments). Cleared in init_before_message().
+        self.turn_tool_call_cache = set()
 
         self.ignore_mentions = ignore_mentions
         if not self.ignore_mentions:
@@ -909,6 +912,8 @@ class Coder:
         self.test_outcome = None
         self.shell_commands = []
         self.message_cost = 0
+        # Clear per-turn tool-call cache
+        self.turn_tool_call_cache = set()
 
         if self.repo:
             self.commit_before_message.append(self.repo.get_head_commit_sha())
@@ -1587,6 +1592,25 @@ class Coder:
             tool = self._tools.get(fn_name)
             if tool:
                 try:
+                    # Prevent duplicate tool invocations within the same user turn
+                    cache_key = (fn_name, args_json.strip())
+                    if cache_key in self.turn_tool_call_cache:
+                        self.cur_messages.append(
+                            {
+                                "role": "assistant",
+                                "content": (
+                                    "You have already called this tool with the same arguments. "
+                                    "Use the information you already have to answer the user's request."
+                                ),
+                            }
+                        )
+                        # Clear pending call to break the loop and continue the dialogue
+                        self.partial_response_function_call = {}
+                        self.partial_response_content = ""
+                        yield from self.send_message("")
+                        return
+                    # Record invocation in cache and execute the tool
+                    self.turn_tool_call_cache.add(cache_key)
                     # The assistant's message with the tool_call is already in cur_messages.
                     # We execute the tool and append the result message with role 'tool'.
                     output = tool.handle_call(args_json)
