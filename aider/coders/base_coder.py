@@ -374,6 +374,11 @@ class Coder:
         if self.file_watcher:
             self.file_watcher.coder = self
 
+        # Track whether the SEARCH/REPLACE instruction block for chat-files
+        # has already been sent in this coder session.  Once it is delivered
+        # we suppress sending it again on subsequent turns.
+        self.chat_files_rules_sent: bool = False
+
         self.suggest_shell_commands = suggest_shell_commands
         self.detect_urls = detect_urls
 
@@ -831,6 +836,18 @@ class Coder:
 
     def get_chat_files_messages(self):
         chat_files_messages = []
+
+        # If we have already shown the SEARCH/REPLACE instruction block once,
+        # do not inject it again.  We still allow new image references to be
+        # transmitted because those may legitimately change every turn.
+        if getattr(self, "chat_files_rules_sent", False):
+            images_message = self.get_images_message(self.abs_fnames)
+            if images_message is not None:
+                return [
+                    images_message,
+                    dict(role="assistant", content="Ok."),
+                ]
+            return []
         if self.abs_fnames:
             # Do NOT inline entire files – let the LLM read slices via FileReadTool/NotebookReadTool
             files_content = self.gpt_prompts.files_content_prefix
@@ -847,6 +864,8 @@ class Coder:
                 dict(role="user", content=files_content),
                 dict(role="assistant", content=files_reply),
             ]
+            # Mark that we already sent the rules so we don't repeat them
+            self.chat_files_rules_sent = True
 
         images_message = self.get_images_message(self.abs_fnames)
         if images_message is not None:
