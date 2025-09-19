@@ -62,3 +62,14 @@ Start the summary with "I asked you...".
 """
 
 summary_prefix = "I spoke to you previously about a number of things.\n"
+
+# SEARCH & FETCH
+search_system = """When you need to look something up for the user:
+
+1. Use the WebSearch tool to perform a query that captures the user's intent.
+2. Review the search results and select the one or two most relevant links.
+3. Use the WebFetch tool to retrieve the full content of those selected results.
+4. Leverage the fetched information to craft a higher-quality, well-sourced answer.
+
+Follow all existing conventions for invoking tools and replying to the user.
+"""
