@@ -1333,12 +1333,13 @@ class Coder:
 
         # Keep the *SEARCH/REPLACE block* rules visible, but comment them out so
         # they are not interpreted by the LLM.  Each line is prefixed with ``# ``.
-        if self.gpt_prompts.system_reminder:
-            commented_reminder = "\n".join(
-                "# " + ln
-                for ln in self.fmt_system_prompt(self.gpt_prompts.system_reminder).splitlines()
-            )
-            main_sys += "\n" + commented_reminder
+        # I'm commenting this
+        # if self.gpt_prompts.system_reminder:
+        #     commented_reminder = "\n".join(
+        #         "# " + ln
+        #         for ln in self.fmt_system_prompt(self.gpt_prompts.system_reminder).splitlines()
+        #     )
+        #     main_sys += "\n" + commented_reminder
 
         chunks = ChatChunks()
 
@@ -1368,14 +1369,15 @@ class Coder:
         chunks.readonly_files = self.get_readonly_files_messages()
         chunks.chat_files = self.get_chat_files_messages()
 
-        if self.gpt_prompts.system_reminder:
-            reminder_message = [
-                dict(
-                    role="system", content=self.fmt_system_prompt(self.gpt_prompts.system_reminder)
-                ),
-            ]
-        else:
-            reminder_message = []
+        # if self.gpt_prompts.system_reminder:
+        #     reminder_message = [
+        #         dict(
+        #             role="system", content=self.fmt_system_prompt(self.gpt_prompts.system_reminder)
+        #         ),
+        #     ]
+        # else:
+        #     reminder_message = []
+        reminder_message = []
 
         chunks.cur = list(self.cur_messages)
         chunks.reminder = []
