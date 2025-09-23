@@ -1331,9 +1331,14 @@ class Coder:
                     dict(role="assistant", content="Ok."),
                 ]
 
-        # Disabled verbose *SEARCH/REPLACE block* rules to keep prompts smaller
-        # if self.gpt_prompts.system_reminder:
-        #     main_sys += "\n" + self.fmt_system_prompt(self.gpt_prompts.system_reminder)
+        # Keep the *SEARCH/REPLACE block* rules visible, but comment them out so
+        # they are not interpreted by the LLM.  Each line is prefixed with ``# ``.
+        if self.gpt_prompts.system_reminder:
+            commented_reminder = "\n".join(
+                "# " + ln
+                for ln in self.fmt_system_prompt(self.gpt_prompts.system_reminder).splitlines()
+            )
+            main_sys += "\n" + commented_reminder
 
         chunks = ChatChunks()
 
