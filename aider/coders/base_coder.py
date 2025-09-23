@@ -1331,8 +1331,9 @@ class Coder:
                     dict(role="assistant", content="Ok."),
                 ]
 
-        if self.gpt_prompts.system_reminder:
-            main_sys += "\n" + self.fmt_system_prompt(self.gpt_prompts.system_reminder)
+        # Disabled verbose *SEARCH/REPLACE block* rules to keep prompts smaller
+        # if self.gpt_prompts.system_reminder:
+        #     main_sys += "\n" + self.fmt_system_prompt(self.gpt_prompts.system_reminder)
 
         chunks = ChatChunks()
 
@@ -1362,14 +1363,8 @@ class Coder:
         chunks.readonly_files = self.get_readonly_files_messages()
         chunks.chat_files = self.get_chat_files_messages()
 
-        if self.gpt_prompts.system_reminder:
-            reminder_message = [
-                dict(
-                    role="system", content=self.fmt_system_prompt(self.gpt_prompts.system_reminder)
-                ),
-            ]
-        else:
-            reminder_message = []
+        # Skip injecting the large system_reminder block in follow-up turns
+        reminder_message = []
 
         chunks.cur = list(self.cur_messages)
         chunks.reminder = []
