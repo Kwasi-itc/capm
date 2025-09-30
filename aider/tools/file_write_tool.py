@@ -15,7 +15,7 @@ from typing import Any, Dict
 import difflib
 import time
 
-from aider.permissions import has_write_permission
+from aider.permissions import has_write_permission, grant_write
 from .base_tool import BaseTool, ToolError
 
 ENCODING = "utf-8"
@@ -67,7 +67,27 @@ class FileWriteTool(BaseTool):
         if not path.is_absolute():
             raise ToolError("file_path must be ABSOLUTE")
         if not has_write_permission(path):
-            raise ToolError(f"Write permission denied for {path}")
+            # Proactively ask the user to grant write permission instead of failing
+            if hasattr(self, "io") and hasattr(self.io, "confirm_ask"):
+                allowed = self.io.confirm_ask(
+                    f"Write permission is required to create or modify\n  {path}\n"
+                    "Grant permission?",
+                    default="y",
+                    explicit_yes_required=False,
+                )
+            else:
+                allowed = False
+
+            if allowed:
+                try:
+                    grant_write(path)
+                except Exception as exc:  # pragma: no cover
+                    raise ToolError(f"Unable to grant write permission for {path}: {exc}") from exc
+                # Re-check permission after granting
+                if not has_write_permission(path):
+                    raise ToolError(f"Write permission still denied for {path} after granting.")
+            else:
+                raise ToolError(f"Write permission denied for {path}")
 
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
