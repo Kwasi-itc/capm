@@ -32,9 +32,11 @@ class FileEditTool(BaseTool):
     # --------------- metadata shown to the LLM --------------------
     name = "file_edit"
     description = (
-        "Create, update or delete the contents of a file by replacing ONE unique "
-        "`old_string` with `new_string`. If `old_string` is empty a new file is "
-        "created. If `new_string` is empty the matching text is deleted."
+        "Create, update or delete text in one or more files.\n"
+        "- Single-file mode: supply `file_path` + `old_string` + `new_string`.\n"
+        "- Multi-file mode: supply a `changes` array where each item contains the "
+        "same keys (`file_path`, `old_string`, etc.). If `old_string` is empty a "
+        "new file is created. If `new_string` is empty the matching text is deleted."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -77,8 +79,18 @@ class FileEditTool(BaseTool):
                 "description": "Text expected on the line *after* `old_string` to help "
                 "uniquely identify the correct match.",
             },
+            "changes": {
+                "type": "array",
+                "description": (
+                    "List of change objects to apply for multi-file edits. Each item "
+                    "must contain the same fields as single-file mode (`file_path`, "
+                    "`old_string`, `new_string`, etc.)."
+                ),
+                "items": {"type": "object"},
+            },
         },
-        "required": ["file_path", "old_string", "new_string"],
+        # Allow either the traditional single-file parameters or a `changes` array
+        "required": [],
         "additionalProperties": False,
     }
 
@@ -151,15 +163,28 @@ class FileEditTool(BaseTool):
     def run(
         self,
         *,
-        file_path: str,
-        old_string: str,
-        new_string: str,
+        file_path: str | None = None,
+        old_string: str | None = None,
+        new_string: str | None = None,
         edit_format: str | None = None,
         line_number: int | None = None,
         before_context: str | None = None,
         after_context: str | None = None,
+        changes: list[dict[str, Any]] | None = None,
     ) -> str:
         start = time.time()
+
+        # -------- multi-file batch processing ---------------------
+        if changes:
+            results: list[str] = []
+            for change in changes:
+                single_result = self.run(**{**change, "edit_format": edit_format})
+                results.append(single_result)
+            return "\n\n".join(results)
+
+        if file_path is None or old_string is None or new_string is None:
+            raise ToolError("file_path, old_string and new_string must be provided.")
+
         target = Path(file_path).expanduser().resolve()
 
         # -------- select diff/edit format ----------
