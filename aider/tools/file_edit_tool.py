@@ -189,6 +189,26 @@ class FileEditTool(BaseTool):
 
         original = self._read_text(target)
 
+        # -------- direct substring replacement if possible --------
+        substring_count = original.count(old_string)
+        if substring_count:
+            # If the string appears more than once, require explicit disambiguation
+            if substring_count > 1 and not any([line_number, before_context, after_context]):
+                raise ToolError(
+                    f"`old_string` occurs {substring_count} times. Provide "
+                    "`line_number`, `before_context`, or `after_context` to disambiguate."
+                )
+
+            updated = original.replace(old_string, new_string, 1)
+            if updated == original:
+                raise ToolError("Edit produced no change (strings identical).")
+
+            self._write_text(target, updated)
+            diff = self._make_output(original, updated, str(target), edit_format)
+            ms = int((time.time() - start) * 1000)
+            verb = "Deleted" if new_string == "" else "Updated"
+            return f"{verb} {target} in {ms} ms\n{diff}"
+
         # -------- locate ALL occurrences --------------------------
         lines = original.splitlines(keepends=True)
         occurrences: list[int] = []
