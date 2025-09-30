@@ -139,6 +139,16 @@ class BashTool(BaseTool):
         if bash_exe:
             cmd_list = [bash_exe, "-lc", cmd]
         else:
+            # Fail fast when the requested command explicitly starts with `bash`
+            # but no Bash executable is available.  This avoids the confusing
+            # "'bash' is not recognized as an internal or external command" error
+            # that would otherwise come from cmd.exe.
+            if token == "bash":
+                raise ToolError(
+                    "`bash` executable not found on this Windows system. "
+                    "Install Git Bash, enable the Windows Subsystem for Linux (WSL) "
+                    "or rewrite the command using native Windows tools."
+                )
             if platform.system() != "Windows":
                 raise ToolError("`bash` executable not found on this system")
             # --- Windows fallback ------------------------------------
