@@ -95,7 +95,15 @@ from hello import hello
     ]
 
     system_reminder = """
-# *SEARCH/REPLACE block* Rules:
+# Editing rules when using tools:
+
+Use FileEditTool, FileWriteTool, or SearchReplaceTool for all code modifications.
+Call these tools directly; do NOT output raw *SEARCH/REPLACE* blocks, unified diffs, or whole-file
+listings.
+If no changes are required, reply with a short explanatory sentence and no code blocks.
+
+{final_reminders}
+{shell_cmd_reminder}
 
 Every *SEARCH/REPLACE block* must use this format:
 1. The opening fence and code language, eg: {fence[0]}python
