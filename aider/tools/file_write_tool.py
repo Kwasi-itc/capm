@@ -66,12 +66,26 @@ class FileWriteTool(BaseTool):
         # validation
         if not path.is_absolute():
             raise ToolError("file_path must be ABSOLUTE")
+
+        # Prepare a preview diff so the user can review changes before granting permission
+        existed = path.exists()
+        try:
+            original = path.read_text(encoding=ENCODING) if existed else ""
+        except (UnicodeDecodeError, OSError):
+            original = path.read_text() if existed else ""
+        diff_preview = self._make_diff(original, content, str(path))
         if not has_write_permission(path):
             # Proactively ask the user to grant write permission instead of failing
             if hasattr(self, "io") and hasattr(self.io, "confirm_ask"):
+                diff_msg = (
+                    f"About to {'create' if not existed else 'modify'} {path} with the following diff:\\n"
+                    "```diff\\n"
+                    f"{diff_preview}"
+                    "\\n```\\n"
+                    "Grant write permission to proceed?"
+                )
                 allowed = self.io.confirm_ask(
-                    f"Write permission is required to create or modify\n  {path}\n"
-                    "Grant permission?",
+                    diff_msg,
                     default="y",
                     explicit_yes_required=False,
                 )
@@ -91,8 +105,6 @@ class FileWriteTool(BaseTool):
 
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            existed = path.exists()
-            original = path.read_text(encoding=ENCODING) if existed else ""
             path.write_text(content, encoding=ENCODING)
         except OSError as exc:
             raise ToolError(f"Unable to write file: {exc}") from exc
