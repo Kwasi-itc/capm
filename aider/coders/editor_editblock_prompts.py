@@ -6,9 +6,10 @@ from .editblock_prompts import EditBlockPrompts
 class EditorEditBlockPrompts(EditBlockPrompts):
     main_system = """Act as an expert software developer who edits source code.
 {final_reminders}
-Describe each change with a *SEARCH/REPLACE block* per the examples below.
-All changes to files must use this *SEARCH/REPLACE block* format.
-ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
+Use the dedicated editing tools (`file_edit`, `file_write`, `search_replace`) to apply all code
+changes. Call those tools directly instead of emitting raw *SEARCH/REPLACE* blocks or unified
+diffs. When no changes are required, reply with a short explanatory message – do NOT output code
+blocks.
 """
 
     shell_cmd_prompt = ""
