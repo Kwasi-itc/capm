@@ -78,7 +78,15 @@ class FileWriteTool(BaseTool):
             # Proactively ask the user to grant write permission instead of failing
             if hasattr(self, "io") and hasattr(self.io, "confirm_ask"):
                 diff_msg = (
-                    f"About to {'create' if not existed else 'modify'} {path} with the following diff:\\n"
+                    f"About to {'create' if not existed else 'modify'} {path}.\\n\\n"
+                    f"--- BEFORE: {path}\\n"
+                    "```text\\n"
+                    f"{original}"
+                    "\\n```\\n"
+                    f"+++ AFTER: {path}\\n"
+                    "```text\\n"
+                    f"{content}"
+                    "\\n```\\n"
                     "```diff\\n"
                     f"{diff_preview}"
                     "\\n```\\n"
