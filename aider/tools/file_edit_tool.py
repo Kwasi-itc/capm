@@ -47,8 +47,8 @@ class FileEditTool(BaseTool):
                 "type": "string",
                 "description": (
                     "Exact literal text to replace. "
-                    "Must include at least 3 complete lines *before* and *after* the target "
-                    "code so the match is unique. "
+                    "Include enough surrounding context so the match is unique, or supply "
+                    "`line_number` / `before_context` / `after_context` to disambiguate. "
                     "Leave empty to create a new file."
                 ),
             },
@@ -171,14 +171,8 @@ class FileEditTool(BaseTool):
             )
 
         # -------- validate context requirement ------------
-        if old_string:
-            # Require at least 3 lines of context *before* and *after* the target line
-            line_breaks = old_string.count("\n")
-            if line_breaks < 6:
-                raise ToolError(
-                    "old_string must include at least 3 lines *before* and 3 lines *after* "
-                    "the target text (≥ 6 newline characters)."
-                )
+        # Heuristic: more context helps ensure the correct match, but don't hard-fail.
+        # If too little context is provided we will later verify the match is unambiguous.
 
         # -------- create new file --------
         if old_string == "":
