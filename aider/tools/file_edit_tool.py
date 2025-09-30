@@ -197,7 +197,17 @@ class FileEditTool(BaseTool):
                 occurrences.append(idx)
 
         if not occurrences:
-            raise ToolError("`old_string` not found in file.")
+            # Provide a helpful hint by showing the most similar lines
+            hint = ""
+            try:
+                sample_lines = [l.strip() for l in lines if l.strip()]
+                close = difflib.get_close_matches(old_string.strip(), sample_lines, n=3, cutoff=0.5)
+                if close:
+                    joined = "\n  • ".join(close)
+                    hint = f"\nDid you mean one of these lines?\n  • {joined}"
+            except Exception:
+                pass
+            raise ToolError(f"`old_string` not found in file.{hint}")
 
         # -------- disambiguate occurrences ------------------------
         selected_idx: int | None = None
