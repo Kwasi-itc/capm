@@ -31,6 +31,9 @@ MAX_LINE_LENGTH = 2_000
 MAX_OUTPUT_SIZE = int(0.25 * 1024 * 1024)  # 256 kB text
 MAX_IMAGE_BYTES = int(3.75 * 1024 * 1024)  # ~5 MB original → ~3.75 MB base64
 
+# Registry of files that have been successfully read during this chat session.
+_FILES_READ: set[str] = set()
+
 
 class FileReadTool(BaseTool):
     # ------------- metadata ---------------------------------------------------
@@ -137,6 +140,8 @@ class FileReadTool(BaseTool):
         header = (
             f"{path} ({len(chunk)} lines, showing {offset}-{offset+len(chunk)-1} of {total})"
         )
+        # Record that this file was read successfully
+        _FILES_READ.add(str(path))
         return header + "\n" + blob
 
     # ------------- image helpers ----------------------------------------------
@@ -147,4 +152,6 @@ class FileReadTool(BaseTool):
             )
         payload = base64.b64encode(path.read_bytes()).decode()
         ext = path.suffix.lower().lstrip(".")
+        # Record that this file was read successfully
+        _FILES_READ.add(str(path))
         return f"data:image/{ext};base64,{payload}"

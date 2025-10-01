@@ -19,6 +19,9 @@ import time
 from pathlib import Path
 from typing import Any, Dict
 
+# Ensure the edit tool can verify that the file has been read
+from .file_read_tool import _FILES_READ
+
 from .base_tool import BaseTool, ToolError
 
 MAX_DIFF_LINES = 200
@@ -167,6 +170,13 @@ class FileEditTool(BaseTool):
             raise ToolError("file_path, old_string and new_string must be provided.")
 
         target = Path(file_path).expanduser().resolve()
+
+        # Enforce read-before-edit policy
+        if str(target) not in _FILES_READ:
+            raise ToolError(
+                "You must use the Read tool on this file earlier in the conversation "
+                "before attempting to edit it."
+            )
 
         # -------- select diff/edit format ----------
         edit_format = (edit_format or _DEFAULT_EDIT_FORMAT).lower()
