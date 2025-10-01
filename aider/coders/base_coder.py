@@ -1331,9 +1331,6 @@ class Coder:
                     dict(role="assistant", content="Ok."),
                 ]
 
-        # Keep the *SEARCH/REPLACE block* rules visible, but comment them out so
-        # they are not interpreted by the LLM.  Each line is prefixed with ``# ``.
-        # I'm commenting this
         # if self.gpt_prompts.system_reminder:
         #     commented_reminder = "\n".join(
         #         "# " + ln
@@ -1529,12 +1526,12 @@ class Coder:
             utils.show_messages(messages, functions=self.functions)
 
         # Log the exact prompt that is about to be sent to the LLM
-        self.io.assistant_output(
-            "\n----- PROMPT SENT TO LLM -----\n"
-            + format_messages(messages)
-            + "\n--------------------------------",
-            pretty=self.show_pretty(),
-        )
+        # self.io.assistant_output(
+        #     "\n----- PROMPT SENT TO LLM -----\n"
+        #     + format_messages(messages)
+        #     + "\n--------------------------------",
+        #     pretty=self.show_pretty(),
+        # )
 
         self.multi_response_content = ""
         if self.show_pretty():
