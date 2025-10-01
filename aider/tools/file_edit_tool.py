@@ -30,7 +30,7 @@ _SUPPORTED_EDIT_FORMATS = {"unified", "whole", "edit-block"}
 
 class FileEditTool(BaseTool):
     # --------------- metadata shown to the LLM --------------------
-    name = "Edit"
+    name = "file_edit"
     description = (
         "Performs exact string replacements in files.\n\n"
         "Usage:\n"
