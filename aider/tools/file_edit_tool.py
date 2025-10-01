@@ -30,67 +30,46 @@ _SUPPORTED_EDIT_FORMATS = {"unified", "whole", "edit-block"}
 
 class FileEditTool(BaseTool):
     # --------------- metadata shown to the LLM --------------------
-    name = "file_edit"
+    name = "Edit"
     description = (
-        "Create, update or delete text in one or more files.\n"
-        "- Single-file mode: supply `file_path` + `old_string` + `new_string`.\n"
-        "- Multi-file mode: supply a `changes` array where each item contains the "
-        "same keys (`file_path`, `old_string`, etc.). If `old_string` is empty a "
-        "new file is created. If `new_string` is empty the matching text is deleted."
+        "Performs exact string replacements in files.\n\n"
+        "Usage:\n"
+        "- You must use your `Read` tool at least once in the conversation before editing. "
+        "This tool will error if you attempt an edit without reading the file.\n"
+        "- When editing text from Read tool output, ensure you preserve the exact indentation "
+        "(tabs/spaces) as it appears AFTER the line number prefix. The line number prefix "
+        "format is: spaces + line number + tab. Never include any part of the line number "
+        "prefix in the old_string or new_string.\n"
+        "- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless "
+        "explicitly required.\n"
+        "- Only use emojis if the user explicitly requests it. Avoid adding emojis to files "
+        "unless asked.\n"
+        "- The edit will FAIL if `old_string` is not unique in the file. Either provide a larger "
+        "string with more surrounding context to make it unique or set `replace_all` to true.\n"
+        "- Use `replace_all` for renaming or replacing every instance of a string across the file."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "file_path": {
                 "type": "string",
-                "description": "Path of the file to modify (absolute preferred)",
+                "description": "The absolute path to the file to modify",
             },
             "old_string": {
                 "type": "string",
-                "description": (
-                    "Exact literal text to replace. "
-                    "Include enough surrounding context so the match is unique, or supply "
-                    "`line_number` / `before_context` / `after_context` to disambiguate. "
-                    "Leave empty to create a new file."
-                ),
+                "description": "The text to replace",
             },
             "new_string": {
                 "type": "string",
-                "description": "Replacement text. Leave empty to delete the match.",
+                "description": "The text to replace it with (must be different from old_string)",
             },
-            "edit_format": {
-                "type": "string",
-                "description": "Optional format of the diff to return. "
-                "One of 'unified', 'whole', or 'edit-block'. Defaults to 'unified'.",
-                "enum": ["unified", "whole", "edit-block"],
-            },
-            "line_number": {
-                "type": "integer",
-                "description": "1-based line number where `old_string` should be replaced if "
-                "there are multiple occurrences.",
-            },
-            "before_context": {
-                "type": "string",
-                "description": "Text expected on the line *before* `old_string` to help "
-                "uniquely identify the correct match.",
-            },
-            "after_context": {
-                "type": "string",
-                "description": "Text expected on the line *after* `old_string` to help "
-                "uniquely identify the correct match.",
-            },
-            "changes": {
-                "type": "array",
-                "description": (
-                    "List of change objects to apply for multi-file edits. Each item "
-                    "must contain the same fields as single-file mode (`file_path`, "
-                    "`old_string`, `new_string`, etc.)."
-                ),
-                "items": {"type": "object"},
+            "replace_all": {
+                "type": "boolean",
+                "default": False,
+                "description": "Replace all occurences of old_string (default false)",
             },
         },
-        # Allow either the traditional single-file parameters or a `changes` array
-        "required": [],
+        "required": ["file_path", "old_string", "new_string"],
         "additionalProperties": False,
     }
 
@@ -166,6 +145,7 @@ class FileEditTool(BaseTool):
         file_path: str | None = None,
         old_string: str | None = None,
         new_string: str | None = None,
+        replace_all: bool | None = None,
         edit_format: str | None = None,
         line_number: int | None = None,
         before_context: str | None = None,
@@ -173,6 +153,7 @@ class FileEditTool(BaseTool):
         changes: list[dict[str, Any]] | None = None,
     ) -> str:
         start = time.time()
+        replace_all = bool(replace_all)
 
         # -------- multi-file batch processing ---------------------
         if changes:
@@ -217,14 +198,25 @@ class FileEditTool(BaseTool):
         # -------- direct substring replacement if possible --------
         substring_count = original.count(old_string)
         if substring_count:
-            # If the string appears more than once, require explicit disambiguation
-            if substring_count > 1 and not any([line_number, before_context, after_context]):
+            # Enforce uniqueness unless replace_all or explicit disambiguation provided
+            if (
+                substring_count > 1
+                and not replace_all
+                and not any([line_number, before_context, after_context])
+            ):
                 raise ToolError(
-                    f"`old_string` occurs {substring_count} times. Provide "
-                    "`line_number`, `before_context`, or `after_context` to disambiguate."
+                    f"`old_string` occurs {substring_count} times. "
+                    "Provide a more specific `old_string`, set `replace_all` to true, "
+                    "or add `line_number`/`before_context`/`after_context` to disambiguate."
                 )
 
-            updated = original.replace(old_string, new_string, 1)
+            # Perform the replacement
+            updated = (
+                original.replace(old_string, new_string)
+                if replace_all
+                else original.replace(old_string, new_string, 1)
+            )
+
             if updated == original:
                 raise ToolError("Edit produced no change (strings identical).")
 
@@ -232,7 +224,8 @@ class FileEditTool(BaseTool):
             diff = self._make_output(original, updated, str(target), edit_format)
             ms = int((time.time() - start) * 1000)
             verb = "Deleted" if new_string == "" else "Updated"
-            return f"{verb} {target} in {ms} ms\n{diff}"
+            scope = "all occurrences of" if replace_all else "1 occurrence of"
+            return f"{verb} {scope} '{old_string}' in {target} in {ms} ms\n{diff}"
 
         # -------- locate ALL occurrences --------------------------
         lines = original.splitlines(keepends=True)
