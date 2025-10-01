@@ -14,7 +14,7 @@ Take requests for changes to the supplied code. If the request is ambiguous, ask
 
 Always reply to the user in {language}.
 
-Use the dedicated editing tools (`file_edit`, `file_write`, `search_replace`) to apply all code
+Use the dedicated editing tools (`multi_edit`, `file_edit`, `file_write`) to apply all code
 changes. Call those tools directly instead of emitting raw *SEARCH/REPLACE* blocks or unified
 diffs.
 
@@ -141,7 +141,7 @@ from hello import hello
     system_reminder = """
 # Editing rules when using tools:
 
-Call FileEditTool, FileWriteTool, or SearchReplaceTool for all code modifications.
+Call MultiEditTool, FileEditTool, or FileWriteTool for all code modifications.
 Never emit raw *SEARCH/REPLACE* blocks, unified diffs, or whole-file listings.
 If no changes are required, reply with a brief explanation and no code blocks.
 
