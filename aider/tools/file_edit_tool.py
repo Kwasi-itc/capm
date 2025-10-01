@@ -245,6 +245,14 @@ class FileEditTool(BaseTool):
                 occurrences.append(idx)
 
         if not occurrences:
+            # If the requested change already appears in the file, treat as idempotent-success
+            if new_string and new_string in original:
+                ms = int((time.time() - start) * 1000)
+                return (
+                    f"No edit needed for {target} (already contains the requested change) "
+                    f"in {ms} ms"
+                )
+
             # Provide a helpful hint by showing the most similar lines
             hint = ""
             try:
