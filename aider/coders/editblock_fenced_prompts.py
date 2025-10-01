@@ -97,7 +97,7 @@ from hello import hello
     system_reminder = """
 # Editing rules when using tools:
 
-Call FileEditTool, FileWriteTool, or SearchReplaceTool for all code modifications.
+Call MultiEditTool, FileEditTool, or FileWriteTool for all code modifications.
 Never emit raw *SEARCH/REPLACE* blocks, unified diffs, or whole-file listings.
 If no changes are required, reply with a brief explanation and no code blocks.
 
