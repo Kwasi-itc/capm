@@ -255,7 +255,15 @@ class FileEditTool(BaseTool):
                     hint = f"\nDid you mean one of these lines?\n  • {joined}"
             except Exception:
                 pass
-            raise ToolError(f"`old_string` not found in file.{hint}")
+            # Provide additional guidance on multi-line matches
+            raise ToolError(
+                "`old_string` not found in file. "
+                "If you are matching multiple lines, double-check that:\n"
+                "• The text matches *exactly* including spaces and tabs.\n"
+                "• All newline characters (`\\n`) are in the correct places.\n"
+                "• The file does not already contain an extra line you’re trying to insert.\n"
+                f"{hint}"
+            )
 
         # -------- disambiguate occurrences ------------------------
         selected_idx: int | None = None
