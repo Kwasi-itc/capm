@@ -50,25 +50,33 @@ Once you understand the request you MUST:
         ),
         dict(
             role="assistant",
-            content="""To make this change we need to modify `mathweb/flask/app.py` to:
+            content="""To implement this change:
 
-1. Import the math package.
-2. Remove the existing factorial() function.
-3. Update get_factorial() to call math.factorial instead.
+1. Import the math module.
+2. Remove the existing factorial() helper.
+3. Update get_factorial() to call math.factorial.
 
-Here are the *SEARCH/REPLACE* blocks:
-
-mathweb/flask/app.py
-
-mathweb/flask/app.py
-{fence[0]}python
-
-{fence[1]}
-
-mathweb/flask/app.py
-{fence[0]}python
-
-{fence[1]}
+```json
+{
+  "tool": "multi_edit",
+  "file_path": "mathweb/flask/app.py",
+  "edits": [
+    {
+      "old_string": "from flask import Flask",
+      "new_string": "import math\\nfrom flask import Flask"
+    },
+    {
+      "old_string": "def factorial(",
+      "new_string": "",
+      "replace_all": false
+    },
+    {
+      "old_string": "return str(factorial(n))",
+      "new_string": "return str(math.factorial(n))"
+    }
+  ]
+}
+```
 """,
         ),
         dict(
@@ -77,22 +85,20 @@ mathweb/flask/app.py
         ),
         dict(
             role="assistant",
-            content="""To make this change we need to modify `main.py` and make a new file `hello.py`:
+            content="""To implement this refactor:
 
-1. Make a new hello.py file with hello() in it.
-2. Remove hello() from main.py and replace it with an import.
+1. Create hello.py with hello() function.
+2. Remove the inline hello() definition from main.py and import it instead.
 
-Here are the *SEARCH/REPLACE* blocks:
+We'll start by creating the new file.
 
-hello.py
-{fence[0]}python
-
-{fence[1]}
-
-main.py
-{fence[0]}python
-
-{fence[1]}
+```json
+{
+  "tool": "file_write",
+  "path": "hello.py",
+  "content": "def hello():\\n    \\\"\\\"\\\"print a greeting\\\"\\\"\\\"\\n    print(\\\"hello\\\")\\n"
+}
+```
 """,
         ),
     ]
