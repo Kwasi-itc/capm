@@ -5,10 +5,60 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+import os
 import jsonschema
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def print_proposed_edits(tool_call_data: dict) -> None:
+    """
+    Neatly prints proposed edits, with background colors in a seamless, solid block.
+    """
+    try:
+        terminal_width = os.get_terminal_size().columns
+    except OSError:
+        terminal_width = 80
+
+    DELETION_STYLE = "\033[47;31m"
+    ADDITION_STYLE = "\033[47;32m"
+    BLUE = "\033[94m"
+    ENDC = "\033[0m"
+
+    file_path = tool_call_data.get("file_path")
+    edits = tool_call_data.get("edits", [])
+
+    if not file_path or not edits:
+        print("Invalid tool call data provided.")
+        return
+
+    print(f"{BLUE}Proposed changes for: {file_path}{ENDC}")
+    print("=" * 50)
+
+    for i, edit in enumerate(edits, 1):
+        print(f"\n--- Edit {i} of {len(edits)} ---")
+
+        old_string = edit.get("old_string", "")
+        new_string = edit.get("new_string", "")
+
+        if old_string:
+            processed_lines = []
+            for line in old_string.splitlines():
+                output_line = f"- {line}"
+                padded_line = output_line.ljust(terminal_width)
+                processed_lines.append(padded_line)
+            full_block = "\n".join(processed_lines)
+            print(f"{DELETION_STYLE}{full_block}{ENDC}")
+
+        if new_string:
+            processed_lines = []
+            for line in new_string.splitlines():
+                output_line = f"+ {line}"
+                padded_line = output_line.ljust(terminal_width)
+                processed_lines.append(padded_line)
+            full_block = "\n".join(processed_lines)
+            print(f"{ADDITION_STYLE}{full_block}{ENDC}")
 
 
 class ToolError(Exception):
