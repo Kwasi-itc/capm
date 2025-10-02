@@ -62,19 +62,19 @@ Once you understand the request you MUST:
   "tool": "multi_edit",
   "file_path": "mathweb/flask/app.py",
   "edits": [
-    {
+    {{
       "old_string": "from flask import Flask",
       "new_string": "import math\\nfrom flask import Flask"
-    },
-    {
+    }},
+    {{
       "old_string": "def factorial(",
       "new_string": "",
       "replace_all": false
-    },
-    {
+    }},
+    {{
       "old_string": "return str(factorial(n))",
       "new_string": "return str(math.factorial(n))"
-    }
+    }}
   ]
 }}
 ```
