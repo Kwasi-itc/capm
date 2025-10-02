@@ -107,7 +107,7 @@ mathweb/flask/app.py
 <<<<<<< SEARCH
 def factorial(n):
     "compute factorial"
-
+    
     if n == 0:
         return 1
     else:
