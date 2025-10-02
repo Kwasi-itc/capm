@@ -46,7 +46,7 @@ Once you understand the request you MUST:
     example_messages = [
         dict(
             role="user",
-            content="Change get_factorial() to use math.factorial",
+            content="Change get_factorial() to use math.factorial and Refactor hello() into its own file.",
         ),
         dict(
             role="assistant",
@@ -56,6 +56,7 @@ Once you understand the request you MUST:
 2. Remove the existing factorial() helper.
 3. Update get_factorial() to call math.factorial.
 
+{fence[0]}python
 ```json
 {
   "tool": "multi_edit",
@@ -77,28 +78,8 @@ Once you understand the request you MUST:
   ]
 }
 ```
-""",
-        ),
-        dict(
-            role="user",
-            content="Refactor hello() into its own file.",
-        ),
-        dict(
-            role="assistant",
-            content="""To implement this refactor:
-
-1. Create hello.py with hello() function.
-2. Remove the inline hello() definition from main.py and import it instead.
-
-We'll start by creating the new file.
-
-```json
-{
-  "tool": "file_write",
-  "path": "hello.py",
-  "content": "def hello():\\n    \\\"\\\"\\\"print a greeting\\\"\\\"\\\"\\n    print(\\\"hello\\\")\\n"
-}
-```
+{fence[1]}
+            
 """,
         ),
     ]
