@@ -35,18 +35,12 @@ Before proposing edits, fetch the exact code you need using FileReadTool / Noteb
 
 Once you understand the request you MUST:
 
-1. Decide if you need to propose *SEARCH/REPLACE* edits to any files that haven't been added to the chat. You can create new files without asking!
+1. Decide which editing tool to call (`multi_edit`, `file_edit`, or `file_write`). Use `multi_edit` when you need to perform several edits to the same file.
 
-But if you need to propose edits to existing files not already added to the chat, you *MUST* tell the user their full path names and ask them to *add the files to the chat*.
-End your reply and wait for their approval.
-You can keep asking if you then decide you need to edit more files.
+2. Summarize the required changes in a few short sentences.
 
-2. Think step-by-step and explain the needed changes in a few short sentences.
+3. Emit exactly one tool call in JSON. Do NOT output any raw code or *SEARCH/REPLACE* blocks.
 
-3. Describe each change with a *SEARCH/REPLACE block* per the examples below.
-
-All changes to files must use this *SEARCH/REPLACE block* format.
-ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
 {shell_cmd_prompt}
 """
     example_messages = [
@@ -141,12 +135,16 @@ from hello import hello
     system_reminder = """
 # Editing rules when using tools:
 
-Call MultiEditTool, FileEditTool, or FileWriteTool for all code modifications.
+Call MultiEditTool (`multi_edit`), FileEditTool (`file_edit`), or FileWriteTool (`file_write`) for all code modifications.
 Never emit raw *SEARCH/REPLACE* blocks, unified diffs, or whole-file listings.
 If no changes are required, reply with a brief explanation and no code blocks.
 
 {final_reminders}
 {shell_cmd_reminder}
+
+{rename_with_shell}{go_ahead_tip}{final_reminders}ONLY EVER RETURN A TOOL CALL JSON!
+{shell_cmd_reminder}
+"""
 
 Every *SEARCH/REPLACE block* must use this format:
 1. The *FULL* file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
@@ -191,8 +189,8 @@ If you want to put code in a new file, use a *SEARCH/REPLACE block* with:
 
 """
 
-    go_ahead_tip = """If the user just says something like "ok" or "go ahead" or "do that" they probably want you to make SEARCH/REPLACE blocks for the code changes you just proposed.
-The user will say when they've applied your edits. If they haven't explicitly confirmed the edits have been applied, they probably want proper SEARCH/REPLACE blocks.
+    go_ahead_tip = """If the user responds with words like "ok", "go ahead", or "do that" they probably want you to emit the actual tool call you have just described.
+The user will confirm once the edits have been applied.
 
 Use FileReadTool first if you need the exact lines you plan to modify.
 
