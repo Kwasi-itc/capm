@@ -1282,17 +1282,27 @@ class Coder:
 
         final_reminders = "\n\n".join(final_reminders)
 
-        prompt = prompt.format(
-            fence=self.fence,
-            quad_backtick_reminder=quad_backtick_reminder,
-            final_reminders=final_reminders,
-            platform=platform_text,
-            shell_cmd_prompt=shell_cmd_prompt,
-            rename_with_shell=rename_with_shell,
-            shell_cmd_reminder=shell_cmd_reminder,
-            go_ahead_tip=self.gpt_prompts.go_ahead_tip,
-            language="English",
-        )
+        # Use a *safe* formatter so any braces found inside JSON / code samples
+        # remain untouched instead of raising ``KeyError``.
+        mapping = {
+            "fence": self.fence,
+            "quad_backtick_reminder": quad_backtick_reminder,
+            "final_reminders": final_reminders,
+            "platform": platform_text,
+            "shell_cmd_prompt": shell_cmd_prompt,
+            "rename_with_shell": rename_with_shell,
+            "shell_cmd_reminder": shell_cmd_reminder,
+            "go_ahead_tip": self.gpt_prompts.go_ahead_tip,
+            "language": "English",
+        }
+
+        class _SafeDict(dict):
+            def __missing__(self, key):  # noqa: D401
+                # Leave unknown placeholders exactly as written so literal
+                # braces (eg inside JSON) survive the formatting step.
+                return "{" + key + "}"
+
+        prompt = prompt.format_map(_SafeDict(mapping))
 
         return prompt
 
