@@ -59,14 +59,12 @@ Once you understand the request you MUST:
 Here are the *SEARCH/REPLACE* blocks:
 
 mathweb/flask/app.py
-{fence[0]}python
 <<<<<<< SEARCH
 from flask import Flask
 =======
 import math
 from flask import Flask
 >>>>>>> REPLACE
-{fence[1]}
 
 mathweb/flask/app.py
 {fence[0]}python
