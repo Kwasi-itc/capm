@@ -58,7 +58,7 @@ Once you understand the request you MUST:
 
 {fence[0]}python
 ```json
-{
+{{
   "tool": "multi_edit",
   "file_path": "mathweb/flask/app.py",
   "edits": [
@@ -76,7 +76,7 @@ Once you understand the request you MUST:
       "new_string": "return str(math.factorial(n))"
     }
   ]
-}
+}}
 ```
 {fence[1]}
             
