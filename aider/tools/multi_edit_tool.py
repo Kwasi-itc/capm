@@ -15,7 +15,7 @@ from typing import Any, Dict, List
 
 from .file_read_tool import _FILES_READ
 from .file_edit_tool import FileEditTool
-from .base_tool import BaseTool, ToolError
+from .base_tool import BaseTool, ToolError, print_proposed_edits
 
 # ---------------------------------------------------------------------------
 
@@ -91,6 +91,8 @@ class MultiEditTool(BaseTool):
     ) -> str:
         start = time.time()
         target = Path(file_path).expanduser().resolve()
+        # Preview the edits with colored diff-style output
+        print_proposed_edits({"file_path": str(target), "edits": edits})
 
         # ------------- read-before-edit enforcement -------------------------
         if str(target) not in _FILES_READ:
