@@ -43,24 +43,7 @@ Once you understand the request you MUST:
 
 {shell_cmd_prompt}
 """
-    example_messages = [
-        dict(
-            role="user",
-            content="Change get_factorial() to use math.factorial",
-        ),
-        dict(
-            role="assistant",
-            content="""To make this change we need to modify `mathweb/flask/app.py` to:
-
-1. Import the math package.
-2. Remove the existing factorial() function.
-3. Update get_factorial() to call math.factorial instead.
-
-Here are the *SEARCH/REPLACE* blocks:
-
-mathweb/flask/app.py
-{fence[0]}python
-<<<<<<< SEARCH
+import math
 from flask import Flask
 =======
 import math
@@ -71,13 +54,6 @@ from flask import Flask
 mathweb/flask/app.py
 {fence[0]}python
 <<<<<<< SEARCH
-def factorial(n):
-    "compute factorial"
-
-    if n == 0:
-        return 1
-    else:
-        return n * factorial(n-1)
 
 =======
 >>>>>>> REPLACE
@@ -86,7 +62,7 @@ def factorial(n):
 mathweb/flask/app.py
 {fence[0]}python
 <<<<<<< SEARCH
-    return str(factorial(n))
+    return str(math.factorial(n))
 =======
     return str(math.factorial(n))
 >>>>>>> REPLACE
@@ -110,10 +86,7 @@ hello.py
 {fence[0]}python
 <<<<<<< SEARCH
 =======
-def hello():
-    "print a greeting"
-
-    print("hello")
+from hello import hello
 >>>>>>> REPLACE
 {fence[1]}
 
