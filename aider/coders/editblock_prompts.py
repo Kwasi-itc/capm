@@ -56,7 +56,36 @@ ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
         ),
         dict(
             role="assistant",
-            content="""To make this change we need to modify `mathweb/flask/app.py` to:
+            content="""To make this change we need to update `mathweb/flask/app.py`:
+
+1. Import the math package.
+2. Remove the existing factorial() function.
+3. Update get_factorial() to call math.factorial instead.
+
+Here is the MultiEditTool call:
+
+```json
+{
+  "name": "MultiEdit",
+  "arguments": {
+    "file_path": "mathweb/flask/app.py",
+    "edits": [
+      {
+        "old_string": "from flask import Flask",
+        "new_string": "import math\\nfrom flask import Flask"
+      },
+      {
+        "old_string": "def factorial(n):",
+        "new_string": ""
+      },
+      {
+        "old_string": "return str(factorial(n))",
+        "new_string": "return str(math.factorial(n))"
+      }
+    ]
+  }
+}
+```
 
 1. Import the math package.
 2. Remove the existing factorial() function.
@@ -105,7 +134,43 @@ mathweb/flask/app.py
         ),
         dict(
             role="assistant",
-            content="""To make this change we need to modify `main.py` and make a new file `hello.py`:
+            content="""To make this change we will update `main.py` and create a new file `hello.py`.
+
+Here is the MultiEditTool call for `hello.py` and `main.py`:
+
+```json
+{
+  "name": "MultiEdit",
+  "arguments": {
+    "file_path": "hello.py",
+    "edits": [
+      {
+        "old_string": "",
+        "new_string": "def hello():\\n    \\\"print a greeting\\\"\\n\\n    print(\\\"hello\\\")"
+      }
+    ]
+  }
+}
+```
+
+```json
+{
+  "name": "MultiEdit",
+  "arguments": {
+    "file_path": "main.py",
+    "edits": [
+      {
+        "old_string": "def hello():",
+        "new_string": "from hello import hello"
+      },
+      {
+        "old_string": "print(\\\"hello\\\")",
+        "new_string": ""
+      }
+    ]
+  }
+}
+```
 
 1. Make a new hello.py file with hello() in it.
 2. Remove hello() from main.py and replace it with an import.
@@ -148,15 +213,15 @@ If no changes are required, reply with a brief explanation and no code blocks.
 {final_reminders}
 {shell_cmd_reminder}
 
-Every *SEARCH/REPLACE block* must use this format:
-1. The *FULL* file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
-2. The opening fence and code language, eg: {fence[0]}python
-3. The start of search block: <<<<<<< SEARCH
-4. A contiguous chunk of lines to search for in the existing source code
-5. The dividing line: =======
-6. The lines to replace into the source code
-7. The end of the replace block: >>>>>>> REPLACE
-8. The closing fence: {fence[1]}
+When you need to modify code:
+
+1. Decide which files need edits. If the request is ambiguous, ask clarifying questions.
+2. Use **MultiEditTool** to bundle all edits for a given file into a single call  
+   (use FileEditTool or FileWriteTool only when appropriate).
+3. After the tool call, briefly explain the changes in plain English – **do NOT output any
+   code fences, diffs, or raw file listings**.
+
+{shell_cmd_reminder}
 
 Use the *FULL* file path, as shown to you by the user.
 {quad_backtick_reminder}
