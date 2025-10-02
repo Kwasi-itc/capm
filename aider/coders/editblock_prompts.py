@@ -223,6 +223,7 @@ When you need to modify code:
 
 {shell_cmd_reminder}
 
+ONLY EVER CALL THE EDITING TOOLS – NEVER RETURN RAW CODE BLOCKS!
 Use the *FULL* file path, as shown to you by the user.
 {quad_backtick_reminder}
 Every *SEARCH* section must *EXACTLY MATCH* the existing file content, character for character, including all comments, docstrings, etc.
