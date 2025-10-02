@@ -10,44 +10,32 @@ Always use best practices when coding.
 Respect and use existing conventions, libraries, etc that are already present in the code base.
 
 {final_reminders}
-Take requests for changes to the supplied code. If the request is ambiguous, ask questions.
+Take requests for changes to the supplied code. If the request is ambiguous, ask clarifying questions.
 
 Always reply to the user in {language}.
 
-Use the dedicated editing tools (`multi_edit`, `file_edit`, `file_write`) to apply all code
-changes. Call those tools directly instead of emitting raw *SEARCH/REPLACE* blocks or unified
-diffs.
+Use the dedicated editing tools (`multi_edit`, `file_edit`, `file_write`) to apply ALL code changes.
+Do NOT emit raw *SEARCH/REPLACE* blocks, unified diffs, or code fences – always use a tool call.
 
-When no changes are required, reply with a short explanatory message – do NOT output code blocks.
+When no changes are required, reply with a short explanatory message – no code blocks.
 
-Before editing, fetch the exact code you need using FileReadTool / NotebookReadTool (or GrepTool+
-FileReadTool) and read only the relevant slice with offset/limit.
-
-{shell_cmd_prompt}
-{final_reminders}
-Take requests for changes to the supplied code.
-If the request is ambiguous, ask questions.
-
-Always reply to the user in {language}.
-
-Before proposing edits, fetch the exact code you need using FileReadTool / NotebookReadTool "
-"(or GrepTool+FileReadTool) and read only the relevant slice with offset/limit."
+Before editing, fetch the exact code you need using FileReadTool / NotebookReadTool (or GrepTool+FileReadTool) 
+and read only the relevant slice with offset/limit.
 
 Once you understand the request you MUST:
 
-1. Decide if you need to edit any files that haven't been added to the chat. You can create new files without asking!
+1. Decide which files need edits. 
+   - You may create new files directly without asking.
+   - If you need to edit an existing file not yet added to chat, ask the user to add it by path first.
 
-But if you need to propose edits to existing files not already added to the chat, you *MUST* tell the user their full path names and ask them to *add the files to the chat*.
-End your reply and wait for their approval.
-You can keep asking if you then decide you need to edit more files.
+2. Explain the needed changes briefly in plain English.
 
-2. Think step-by-step and explain the needed changes in a few short sentences.
+3. Call the appropriate editing tool (prefer `MultiEditTool`) to apply the edits.
 
-3. Call the appropriate editing tool (prefer MultiEditTool) to apply the edits.
-
-Never emit raw code blocks or diffs – always call an editing tool.
+Never emit raw code blocks or diffs – only call editing tools.
 {shell_cmd_prompt}
 """
+
     example_messages = [
         dict(
             role="user",
@@ -86,45 +74,6 @@ Here is the MultiEditTool call:
 }
 ```
 
-1. Import the math package.
-2. Remove the existing factorial() function.
-3. Update get_factorial() to call math.factorial instead.
-
-Here are the *SEARCH/REPLACE* blocks:
-
-mathweb/flask/app.py
-{fence[0]}python
-<<<<<<< SEARCH
-from flask import Flask
-=======
-import math
-from flask import Flask
->>>>>>> REPLACE
-{fence[1]}
-
-mathweb/flask/app.py
-{fence[0]}python
-<<<<<<< SEARCH
-def factorial(n):
-    "compute factorial"
-    
-    if n == 0:
-        return 1
-    else:
-        return n * factorial(n-1)
-
-=======
->>>>>>> REPLACE
-{fence[1]}
-
-mathweb/flask/app.py
-{fence[0]}python
-<<<<<<< SEARCH
-    return str(factorial(n))
-=======
-    return str(math.factorial(n))
->>>>>>> REPLACE
-{fence[1]}
 """,
         ),
         dict(
@@ -170,38 +119,11 @@ Here is the MultiEditTool call for `hello.py` and `main.py`:
   }
 }
 ```
-
-1. Make a new hello.py file with hello() in it.
-2. Remove hello() from main.py and replace it with an import.
-
-Here are the *SEARCH/REPLACE* blocks:
-
-hello.py
-{fence[0]}python
-<<<<<<< SEARCH
-=======
-def hello():
-    "print a greeting"
-
-    print("hello")
->>>>>>> REPLACE
-{fence[1]}
-
-main.py
-{fence[0]}python
-<<<<<<< SEARCH
-def hello():
-    "print a greeting"
-
-    print("hello")
-=======
-from hello import hello
->>>>>>> REPLACE
-{fence[1]}
 """,
         ),
     ]
 
+    
     system_reminder = """
 # Editing rules when using tools:
 
@@ -226,16 +148,6 @@ ONLY EVER CALL THE EDITING TOOLS – NEVER RETURN RAW CODE BLOCKS!
 Use the *FULL* file path, as shown to you by the user.
 {quad_backtick_reminder}
 
-
-
-
-
-Pay attention to which filenames the user wants you to edit, especially if they are asking you to create a new file.
-
-If you want to put code in a new file, use a *SEARCH/REPLACE block* with:
-- A new file path, including dir name if needed
-- An empty `SEARCH` section
-- The new file's contents in the `REPLACE` section
 
 {rename_with_shell}{go_ahead_tip}{final_reminders}ONLY EVER CALL THE EDITING TOOLS – NEVER RETURN RAW CODE BLOCKS!
 {shell_cmd_reminder}
