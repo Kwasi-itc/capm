@@ -59,35 +59,15 @@ Once you understand the request you MUST:
 Here are the *SEARCH/REPLACE* blocks:
 
 mathweb/flask/app.py
-<<<<<<< SEARCH
-from flask import Flask
-=======
-import math
-from flask import Flask
->>>>>>> REPLACE
 
 mathweb/flask/app.py
 {fence[0]}python
-<<<<<<< SEARCH
-def factorial(n):
-    "compute factorial"
 
-    if n == 0:
-        return 1
-    else:
-        return n * factorial(n-1)
-
-=======
->>>>>>> REPLACE
 {fence[1]}
 
 mathweb/flask/app.py
 {fence[0]}python
-<<<<<<< SEARCH
-    return str(factorial(n))
-=======
-    return str(math.factorial(n))
->>>>>>> REPLACE
+
 {fence[1]}
 """,
         ),
@@ -106,25 +86,12 @@ Here are the *SEARCH/REPLACE* blocks:
 
 hello.py
 {fence[0]}python
-<<<<<<< SEARCH
-=======
-def hello():
-    "print a greeting"
 
-    print("hello")
->>>>>>> REPLACE
 {fence[1]}
 
 main.py
 {fence[0]}python
-<<<<<<< SEARCH
-def hello():
-    "print a greeting"
 
-    print("hello")
-=======
-from hello import hello
->>>>>>> REPLACE
 {fence[1]}
 """,
         ),
