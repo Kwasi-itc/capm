@@ -146,8 +146,6 @@ If no changes are required, reply with a brief explanation and no code blocks.
 {shell_cmd_reminder}
 """
 
-"""
-
     rename_with_shell = """To rename files which have been added to the chat, use shell commands at the end of your response.
 
 """
