@@ -75,45 +75,45 @@ class FileWriteTool(BaseTool):
             original = path.read_text() if existed else ""
         diff_preview = self._make_diff(original, content, str(path))
         # Check write permission on the file **or** its parent directory (for new files)
-        if not (has_write_permission(path) or has_write_permission(path.parent)):
-            # Proactively ask the user to grant write permission instead of failing
-            if hasattr(self, "io") and hasattr(self.io, "confirm_ask"):
-                diff_msg = (
-                    f"About to {'create' if not existed else 'modify'} {path}.\\n\\n"
-                    f"--- BEFORE: {path}\\n"
-                    "```text\\n"
-                    f"{original}"
-                    "\\n```\\n"
-                    f"+++ AFTER: {path}\\n"
-                    "```text\\n"
-                    f"{content}"
-                    "\\n```\\n"
-                    "```diff\\n"
-                    f"{diff_preview}"
-                    "\\n```\\n"
-                    "Grant write permission to proceed?"
-                )
-                allowed = self.io.confirm_ask(
-                    diff_msg,
-                    default="y",
-                    explicit_yes_required=False,
-                )
-            else:
-                allowed = False
+        # if not (has_write_permission(path) or has_write_permission(path.parent)):
+        #     # Proactively ask the user to grant write permission instead of failing
+        #     if hasattr(self, "io") and hasattr(self.io, "confirm_ask"):
+        #         diff_msg = (
+        #             f"About to {'create' if not existed else 'modify'} {path}.\\n\\n"
+        #             f"--- BEFORE: {path}\\n"
+        #             "```text\\n"
+        #             f"{original}"
+        #             "\\n```\\n"
+        #             f"+++ AFTER: {path}\\n"
+        #             "```text\\n"
+        #             f"{content}"
+        #             "\\n```\\n"
+        #             "```diff\\n"
+        #             f"{diff_preview}"
+        #             "\\n```\\n"
+        #             "Grant write permission to proceed?"
+        #         )
+        #         allowed = self.io.confirm_ask(
+        #             diff_msg,
+        #             default="y",
+        #             explicit_yes_required=False,
+        #         )
+        #     else:
+        #         allowed = False
 
-            if allowed:
-                try:
-                    # Grant write permission on the containing directory
-                    grant_write(path.parent)
-                except Exception as exc:  # pragma: no cover
-                    raise ToolError(f"Unable to grant write permission for {path}: {exc}") from exc
-                # Re-check permission after granting
-                if not (has_write_permission(path) or has_write_permission(path.parent)):
-                    raise ToolError(
-                        f"Write permission still denied for {path} after granting."
-                    )
-            else:
-                raise ToolError(f"Write permission denied for {path}")
+        #     if allowed:
+        #         try:
+        #             # Grant write permission on the containing directory
+        #             grant_write(path.parent)
+        #         except Exception as exc:  # pragma: no cover
+        #             raise ToolError(f"Unable to grant write permission for {path}: {exc}") from exc
+        #         # Re-check permission after granting
+        #         if not (has_write_permission(path) or has_write_permission(path.parent)):
+        #             raise ToolError(
+        #                 f"Write permission still denied for {path} after granting."
+        #             )
+        #     else:
+        #         raise ToolError(f"Write permission denied for {path}")
 
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
