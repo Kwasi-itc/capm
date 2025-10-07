@@ -610,10 +610,33 @@ class Model(ModelSettings):
     def tokenizer(self, text):
         return litellm.encode(model=self.name, text=text)
 
+    def _sanitize_messages_for_token_count(self, messages):
+        """Return a copy of messages safe for json serialization & token counting.
+
+        Some LLM SDKs (eg litellm) raise when a message value is a custom object
+        such as `litellm.types.utils.Function`.  We defensively coerce any
+        non-JSON-serializable value (currently just `function_call`) to a plain
+        string so that token counting never fails.
+        """
+        sanitized = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                sanitized.append(msg)
+                continue
+
+            fixed = msg.copy()
+            fc = fixed.get("function_call")
+            # Accept dict / str / None, coerce everything else
+            if fc is not None and not isinstance(fc, (dict, str)):
+                fixed["function_call"] = str(fc)
+            sanitized.append(fixed)
+        return sanitized
+
     def token_count(self, messages):
-        if type(messages) is list:
+        if isinstance(messages, list):
+            safe_messages = self._sanitize_messages_for_token_count(messages)
             try:
-                return litellm.token_counter(model=self.name, messages=messages)
+                return litellm.token_counter(model=self.name, messages=safe_messages)
             except Exception as err:
                 print(f"Unable to count tokens: {err}")
                 return 0
