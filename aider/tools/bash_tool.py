@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import shlex
 import subprocess
+import itertools
+import threading
 import textwrap
 import time
 import shutil
@@ -94,6 +96,10 @@ class BashTool(BaseTool):
                 "type": "string",
                 "description": "Optional working directory for the command.",
             },
+            "progress": {
+                "type": "boolean",
+                "description": "Show a live spinner/progress indicator while the command runs.",
+            },
         },
         "required": ["cmd"],
         "additionalProperties": False,
@@ -109,7 +115,14 @@ class BashTool(BaseTool):
 
 
     # ---------------- main entry point ------------------------------------
-    def run(self, *, cmd: str, timeout: int | None = None, cwd: str | None = None) -> str:
+    def run(
+        self,
+        *,
+        cmd: str,
+        timeout: int | None = None,
+        cwd: str | None = None,
+        progress: bool = False,
+    ) -> str:
         # ----- basic validation -----
         if "\n" in cmd:
             raise ToolError("Command must not contain newline characters; use ';' or '&&'.")
@@ -121,6 +134,25 @@ class BashTool(BaseTool):
         timeout_ms = timeout if timeout is not None else DEFAULT_TIMEOUT_MS
         timeout_ms = min(max(timeout_ms, 1), MAX_TIMEOUT_MS)
         timeout_s = timeout_ms / 1000.0
+
+        # -------- optional spinner/progress indicator ---------
+        stop_spinner: threading.Event | None = None
+        spinner_thread: threading.Thread | None = None
+        if progress and sys.stdout.isatty():
+            stop_spinner = threading.Event()
+
+            def _spin(ev: threading.Event) -> None:
+                for ch in itertools.cycle("|/-\\"):
+                    if ev.is_set():
+                        break
+                    sys.stdout.write(f"\rRunning… {ch}")
+                    sys.stdout.flush()
+                    time.sleep(0.1)
+                sys.stdout.write("\r" + " " * 20 + "\r")
+                sys.stdout.flush()
+
+            spinner_thread = threading.Thread(target=_spin, args=(stop_spinner,), daemon=True)
+            spinner_thread.start()
 
         # track any temporary file created for long inline python
         tmp_path: str | None = None
@@ -198,6 +230,11 @@ class BashTool(BaseTool):
                 timeout=timeout_s,
             )
 
+            # stop spinner once process has finished
+            if stop_spinner:
+                stop_spinner.set()
+                spinner_thread.join()
+
             # ------- build nice output header & body up-front --------------
             elapsed_ms = int((time.time() - start) * 1000)
             combined = (proc.stdout or "") + (proc.stderr or "")
@@ -219,8 +256,14 @@ class BashTool(BaseTool):
                     ).rstrip()
                 )
         except subprocess.TimeoutExpired:
+            if stop_spinner:
+                stop_spinner.set()
+                spinner_thread.join()
             raise ToolError(f"Command timed out after {timeout_ms} ms") from None
         except Exception as exc:  # noqa: BLE001
+            if stop_spinner:
+                stop_spinner.set()
+                spinner_thread.join()
             raise ToolError(f"Error running command: {exc}") from exc
 
         elapsed_ms = int((time.time() - start) * 1000)
