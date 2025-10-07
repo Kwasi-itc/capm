@@ -241,30 +241,31 @@ class BashTool(BaseTool):
             out, total_lines = _truncate(combined)
             header = f"exit={proc.returncode}  lines={total_lines}  elapsed={elapsed_ms}ms"
 
-            # Even on non-zero exit status, surface the captured output so the
-            # user/LLM can see what actually happened instead of hiding it away.
+            # On non-zero exit we still return the captured output instead of
+            # raising an error. The LLM can inspect the result and decide what
+            # to do next.
             if proc.returncode != 0:
                 if tmp_path:
                     Path(tmp_path).unlink(missing_ok=True)
-                raise ToolError(
-                    textwrap.dedent(
-                        f"""\
-                        {header}
-                        ── output ──
-                        {out}
-                        """
-                    ).rstrip()
-                )
+                return textwrap.dedent(
+                    f"""\
+                    {header}
+                    ── output ──
+                    {out}
+                    """
+                ).rstrip()
         except subprocess.TimeoutExpired:
             if stop_spinner:
                 stop_spinner.set()
                 spinner_thread.join()
-            raise ToolError(f"Command timed out after {timeout_ms} ms") from None
+            # Return a plain string instead of throwing so the LLM can handle it.
+            return f"Command timed out after {timeout_ms} ms"
         except Exception as exc:  # noqa: BLE001
             if stop_spinner:
                 stop_spinner.set()
                 spinner_thread.join()
-            raise ToolError(f"Error running command: {exc}") from exc
+            # Surface the error text as the tool’s result instead of raising.
+            return f"Error running command: {exc}"
 
         elapsed_ms = int((time.time() - start) * 1000)
         combined = (proc.stdout or "") + (proc.stderr or "")
