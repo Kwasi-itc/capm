@@ -222,13 +222,49 @@ class BashTool(BaseTool):
         # ----- execute -----
         start = time.time()
         try:
-            proc = subprocess.run(
+            # --- live streaming -------------------------------------------------
+            #
+            # Stream stdout/stderr to the user in real-time so long-running
+            # programs like “npm run dev” immediately show their output while
+            # they execute.  We still capture everything so it can be returned
+            # to the LLM once the command finishes or times-out.
+            #
+            output_lines: list[str] = []
+            proc = subprocess.Popen(
                 cmd_list,
                 cwd=workdir,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
-                timeout=timeout_s,
+                bufsize=1,
+                universal_newlines=True,
             )
+
+            deadline = start + timeout_s
+            try:
+                for line in proc.stdout:
+                    # Stop the spinner on first real output
+                    if line and stop_spinner and not stop_spinner.is_set():
+                        stop_spinner.set()
+                        spinner_thread.join()
+
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+                    output_lines.append(line)
+
+                    if time.time() > deadline:
+                        proc.kill()
+                        raise subprocess.TimeoutExpired(cmd_list, timeout_s)
+                # ensure the process has exited (raises on timeout)
+                proc.wait(timeout=max(0, deadline - time.time()))
+            finally:
+                if proc.stdout:
+                    proc.stdout.close()
+
+            # if no output at all (eg. silent command) stop the spinner now
+            if stop_spinner and not stop_spinner.is_set():
+                stop_spinner.set()
+                spinner_thread.join()
 
             # stop spinner once process has finished
             if stop_spinner:
@@ -237,7 +273,7 @@ class BashTool(BaseTool):
 
             # ------- build nice output header & body up-front --------------
             elapsed_ms = int((time.time() - start) * 1000)
-            combined = (proc.stdout or "") + (proc.stderr or "")
+            combined = "".join(output_lines)
             out, total_lines = _truncate(combined)
             header = f"exit={proc.returncode}  lines={total_lines}  elapsed={elapsed_ms}ms"
 
@@ -268,7 +304,7 @@ class BashTool(BaseTool):
             return f"Error running command: {exc}"
 
         elapsed_ms = int((time.time() - start) * 1000)
-        combined = (proc.stdout or "") + (proc.stderr or "")
+        combined = "".join(output_lines)
         out, total_lines = _truncate(combined)
 
         header = f"exit={proc.returncode}  lines={total_lines}  elapsed={elapsed_ms}ms"
