@@ -44,6 +44,7 @@ __all__ = [
     "delete_project",
     "active_projects_metrics",
     "health_projects_metrics",
+    "owners_projects_metrics",
 ]
 
 
@@ -195,3 +196,30 @@ def health_projects_metrics(query: Optional[Dict[str, Any]] = None, **query_para
     """
     params = {**(query or {}), **query_params}
     return _get("/projects/metrics/healths.json", params=_serialize_params(params))
+
+
+def owners_projects_metrics(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /projects/metrics/owners.json – Count projects per *project owner user*,
+    including a bucket for un-assigned projects.
+
+    Any query-string filter supported by the endpoint can be provided either
+    via the *query* dict or as keyword arguments.  Common parameters include:
+
+    • orderMode (str) – ``asc`` | ``desc`` (default ``desc``)  
+    • pageSize (int) – items per page (default 50)  
+    • page (int) – page number (default 1)  
+    • skipCounts (bool) – performance hint  
+    • onlyStarredProjects (bool)  
+    • matchAllProjectTags (bool)  
+    • projectTagIds (list[int])  
+    • projectStatuses (list[str]) – active | current | late | upcoming | completed | deleted  
+    • projectOwnerIds / projectIds / projectHealths / projectCompanyIds / projectCategoryIds …
+
+    Returns
+    -------
+    requests.Response
+        JSON body like ``{"owners": [{"userId": 123, "count": 7}, …], "unassigned": 3}``
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/projects/metrics/owners.json", params=_serialize_params(params))
