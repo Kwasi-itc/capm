@@ -47,6 +47,7 @@ __all__ = [
     "health_projects_metrics",
     "owners_projects_metrics",
     "list_project_updates",
+    "project_updates",
 ]
 
 
@@ -292,3 +293,33 @@ def list_project_updates(query: Optional[Dict[str, Any]] = None, **query_params)
     """
     params = {**(query or {}), **query_params}
     return _get("/projects/updates.json", params=_serialize_params(params))
+
+
+def project_updates(
+    project_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /projects/{projectId}/updates.json – Return status‐updates that belong
+    to a *single* project.
+
+    All query-string filters supported by the generic updates endpoint are
+    available here as well (``updatedAfter``, ``orderBy``, pagination,
+    ``showDeleted``, etc.).
+
+    Parameters
+    ----------
+    project_id:
+        Numeric Teamwork project ID.
+    query / **query_params:
+        Optional query parameters (see Teamwork docs).
+
+    Returns
+    -------
+    requests.Response
+        JSON list of update objects.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/projects/{project_id}/updates.json", params=_serialize_params(params))
