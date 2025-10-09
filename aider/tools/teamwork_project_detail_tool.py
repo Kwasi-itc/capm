@@ -23,11 +23,19 @@ class TeamworkProjectDetailTool(BaseTool):
 
     name = "teamwork_project_detail"
     description = (
-        "Retrieve a single project by ID with optional query filters.  "
-        "Positional argument ``project_id`` (int) is required.  Any additional "
-        "keyword arguments are forwarded as query-string parameters, e.g. "
-        "`projectCustomField[10][eq]='Option1'`, `includeCustomFields=True`, "
-        "`orderMode='asc'`, etc."
+        "Retrieve detailed information for a single Teamwork project identified by "
+        "``project_id`` (int).  Any extra keyword arguments you supply are forwarded "
+        "as query-string parameters so you can take full advantage of Teamwork’s "
+        "*Get Project* filters.  Common options include:\n"
+        "  • projectCustomField[<id>][<op>] – advanced custom-field filtering where "
+        "    <op> is one of eq | not | like | not-like | lt | gt | any\n"
+        "  • updatedAfter, searchTerm, reportType / reportFormat, projectType\n"
+        "  • orderBy (name, duedate, lastactivity, …) together with orderMode=asc|desc\n"
+        "  • pageSize & page for pagination\n"
+        "  • projectStatuses, projectOwnerIds, projectIds, projectTagIds (list support)\n"
+        "  • Boolean toggles such as onlyStarredProjects, includeCustomFields, includeStats …\n"
+        "The tool returns the endpoint’s JSON response **as a string** so it is safe for the "
+        "token counter, ready to be parsed or displayed by the LLM."
     )
 
     def run(self, project_id: int, **kwargs: Dict[str, Any]):  # noqa: D401
