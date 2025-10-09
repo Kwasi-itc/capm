@@ -28,6 +28,32 @@ __all__ = [__version__]
 # Doing this work here in ``__init__`` guarantees it runs for both the console
 # entry-point and ``python -m aider``.
 import os as _os
+from pathlib import Path as _Path
+
+
+def _load_dotenv() -> None:
+    """
+    Manually load key=value pairs from a local ``.env`` file (if present) into
+    the process environment.  Lines beginning with ``#`` are ignored. Existing
+    environment variables are left untouched.
+    """
+    env_file = (_Path(__file__).resolve().parent.parent / ".env").expanduser()
+    if not env_file.is_file():
+        return
+
+    for raw_line in env_file.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        # Do not override an explicit environment variable
+        _os.environ.setdefault(key, val)
+
+
+# Ensure .env variables are available early in startup
+_load_dotenv()
 
 _teamwork_api = _os.getenv("TEAMWORK_API")
 if _teamwork_api:
