@@ -48,6 +48,7 @@ __all__ = [
     "owners_projects_metrics",
     "list_project_updates",
     "project_updates",
+    "project_tasks",
 ]
 
 
@@ -323,3 +324,43 @@ def project_updates(
     """
     params = {**(query or {}), **query_params}
     return _get(f"/projects/{project_id}/updates.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Project tasks
+# --------------------------------------------------------------------------- #
+def project_tasks(
+    project_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /projects/{projectId}/tasks.json – List tasks that belong to *one*
+    project.
+
+    Parameters (subset)
+    -------------------
+    updatedAfter / updatedBefore   str   – filter by last-update date
+    taskFilter                     str   – ``all``, ``completed``, ``overdue``, …
+    searchTerm                     str   – free-text search
+    priority                       str   – ``low`` | ``medium`` | ``high`` | …
+    orderBy                        str   – ``duedate`` | ``priority`` | ``createdat`` …
+    orderMode                      str   – ``asc`` | ``desc`` (default asc)
+    pageSize / page                int   – pagination (defaults 50 / 1)
+    showDeleted / skipCounts       bool
+    onlyStarredProjects            bool
+    projectTagIds, tags            list[int] / list[str]
+    customField[ID][op]            str   – advanced custom-field filter,
+                                           where *op* = eq | not | like | gt | lt | any
+
+    All additional query parameters accepted by Teamwork may be supplied
+    via *query* or **query_params.
+
+    Returns
+    -------
+    requests.Response
+        Body shape: ``{"tasks": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/projects/{project_id}/tasks.json", params=_serialize_params(params))
