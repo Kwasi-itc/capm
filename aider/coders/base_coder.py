@@ -723,9 +723,16 @@ class Coder:
         """
         text = ""
         for msg in self.cur_messages:
-            content = msg.get("content") or ""
-            if content:
-                text += content + "\n"
+            content = msg.get("content")
+            if content is None:
+                continue
+            if not isinstance(content, str):
+                # Safely stringify non-string payloads (eg dicts from tool calls)
+                try:
+                    content = json.dumps(content, ensure_ascii=False)
+                except Exception:
+                    content = str(content)
+            text += content + "\n"
         return text
 
     def get_ident_mentions(self, text):
