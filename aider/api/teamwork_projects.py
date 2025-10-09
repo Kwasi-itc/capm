@@ -42,6 +42,7 @@ __all__ = [
     "create_project",
     "update_project",
     "delete_project",
+    "active_projects_metrics",
 ]
 
 
@@ -162,3 +163,16 @@ def delete_project(project_id: int | str, **kwargs):
     DELETE /projects/{id}.json - Delete (or archive) a project.
     """
     return _delete(f"/projects/{project_id}.json", **kwargs)
+
+
+def active_projects_metrics(**kwargs):
+    """
+    GET /projects/metrics/active.json – Return metrics about active
+    projects, including the total count.
+
+    Returns
+    -------
+    requests.Response
+        The JSON body looks like ``{"count": <int>, ...}``.
+    """
+    return _get("/projects/metrics/active.json", **kwargs)
