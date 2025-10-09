@@ -39,6 +39,7 @@ from .teamwork import put as _put
 __all__ = [
     "list_projects",
     "get_project",
+    "get_project_details",
     "create_project",
     "update_project",
     "delete_project",
@@ -136,11 +137,51 @@ def list_projects(query: Optional[Dict[str, Any]] = None, **query_params):
     return _get("/projects.json", params=_serialize_params(params))
 
 
-def get_project(project_id: int | str, **kwargs):
+def get_project(
+    project_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
     """
-    GET /projects/{id}.json - Retrieve a single project by *project_id*.
+    GET /projects/{id}.json – Retrieve a single project.
+
+    Parameters
+    ----------
+    project_id:
+        The numeric ID of the project.
+    query / **query_params:
+        Optional query-string parameters (see get_project_details for list).
     """
-    return _get(f"/projects/{project_id}.json", **kwargs)
+    params = {**(query or {}), **query_params}
+    return _get(f"/projects/{project_id}.json", params=_serialize_params(params))
+
+
+def get_project_details(
+    project_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /projects/{id}.json – Retrieve a project with optional **advanced filters**.
+
+    Supports every parameter accepted by Teamwork’s “Get a project” endpoint,
+    including custom-field filters using the ``projectCustomField[id][op]`` syntax.
+
+    Examples
+    --------
+        # plain request
+        get_project_details(123)
+
+        # filter by custom field id 10 equals "Option1"
+        get_project_details(123, **{"projectCustomField[10][eq]": "Option1"})
+
+        # pass arbitrary query parameters
+        get_project_details(123, orderMode="asc", includeCustomFields=True)
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/projects/{project_id}.json", params=_serialize_params(params))
 
 
 def create_project(data: Dict[str, Any], **kwargs):
