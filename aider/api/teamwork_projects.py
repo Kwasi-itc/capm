@@ -28,7 +28,7 @@ Typical usage
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .teamwork import delete as _delete
 from .teamwork import get as _get
@@ -46,13 +46,55 @@ __all__ = [
 
 
 # --------------------------------------------------------------------------- #
+# helpers
+# --------------------------------------------------------------------------- #
+def _serialize_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert *params* to the format expected by the Teamwork API:
+
+    • ``list``/``tuple``/``set`` values are joined by commas  
+    • ``bool`` values are lower-cased strings ("true"/"false")
+
+    The original dict is **not** modified; a new one is returned.
+    """
+    out: Dict[str, Any] = {}
+    for key, val in params.items():
+        if isinstance(val, (list, tuple, set)):
+            out[key] = ",".join(str(x) for x in val)
+        elif isinstance(val, bool):
+            out[key] = str(val).lower()
+        else:
+            out[key] = val
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # Projects
 # --------------------------------------------------------------------------- #
-def list_projects(**kwargs):
+def list_projects(query: Optional[Dict[str, Any]] = None, **query_params):
     """
     GET /projects.json - List projects visible to the authenticated user.
+
+    Parameters
+    ----------
+    query:
+        Optional explicit dict of query parameters.
+    **query_params:
+        Additional query parameters passed as keyword arguments.
+
+    Examples
+    --------
+        # basic call
+        list_projects()
+
+        # with explicit parameters
+        list_projects(searchTerm="Website", pageSize=100)
+
+        # with list parameters
+        list_projects(projectStatuses=["active", "late"], onlyStarredProjects=True)
     """
-    return _get("/projects.json", **kwargs)
+    params = {**(query or {}), **query_params}
+    return _get("/projects.json", params=_serialize_params(params))
 
 
 def get_project(project_id: int | str, **kwargs):
