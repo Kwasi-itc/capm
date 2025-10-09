@@ -50,4 +50,3 @@ importlib-metadata<8.0.0
 # configargparse was 1.7 pulled
 configargparse>1.7
 requests
-python-dotenv

@@ -428,8 +428,6 @@ python-dateutil==2.9.0.post0
     #   matplotlib
     #   pandas
     #   posthog
-python-dotenv==1.1.0
-    # via litellm
 pytz==2025.2
     # via pandas
 pyyaml==6.0.2

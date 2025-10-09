@@ -27,15 +27,7 @@ __all__ = [__version__]
 # user immediately knows it has been detected when they invoke the `aider` CLI.
 # Doing this work here in ``__init__`` guarantees it runs for both the console
 # entry-point and ``python -m aider``.
-try:
-    from dotenv import load_dotenv  # type: ignore
-except ImportError:  # pragma: no cover
-    load_dotenv = None
-
 import os as _os
-
-if load_dotenv:
-    load_dotenv()
 
 _teamwork_api = _os.getenv("TEAMWORK_API")
 if _teamwork_api:
