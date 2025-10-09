@@ -43,6 +43,7 @@ __all__ = [
     "update_project",
     "delete_project",
     "active_projects_metrics",
+    "health_projects_metrics",
 ]
 
 
@@ -176,3 +177,21 @@ def active_projects_metrics(**kwargs):
         The JSON body looks like ``{"count": <int>, ...}``.
     """
     return _get("/projects/metrics/active.json", **kwargs)
+
+
+def health_projects_metrics(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /projects/metrics/healths.json – Return the number of projects in each
+    health category *visible to the authenticated user*.
+
+    All filters accepted by the endpoint (``projectStatus``, ``onlyStarredProjects``,
+    ``projectTagIds`` … see Teamwork docs) can be supplied either via the *query*
+    dict or as keyword arguments.
+
+    Returns
+    -------
+    requests.Response
+        JSON body such as ``{"good": 12, "ok": 7, "bad": 2, "not_set": 3}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/projects/metrics/healths.json", params=_serialize_params(params))
