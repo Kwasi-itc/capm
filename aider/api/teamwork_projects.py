@@ -73,7 +73,7 @@ def _serialize_params(params: Dict[str, Any]) -> Dict[str, Any]:
 # --------------------------------------------------------------------------- #
 def list_projects(query: Optional[Dict[str, Any]] = None, **query_params):
     """
-    GET /projects.json - List projects visible to the authenticated user.
+    GET /projects/api/v3/projects.json - List projects visible to the authenticated user.
 
     Parameters
     ----------
@@ -94,7 +94,7 @@ def list_projects(query: Optional[Dict[str, Any]] = None, **query_params):
         list_projects(projectStatuses=["active", "late"], onlyStarredProjects=True)
     """
     params = {**(query or {}), **query_params}
-    return _get("/projects.json", params=_serialize_params(params))
+    return _get("/projects/api/v3/projects.json", params=_serialize_params(params))
 
 
 def get_project(project_id: int | str, **kwargs):
