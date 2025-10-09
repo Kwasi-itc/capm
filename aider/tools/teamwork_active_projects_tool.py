@@ -26,7 +26,9 @@ class TeamworkActiveProjectsTool(BaseTool):
 
     name = "teamwork_active_projects"
     description = (
-        "Return the metrics for active projects from Teamwork (total active project count, etc.)."
+        "Return high-level metrics for active projects from Teamwork by calling "
+        "GET /projects/metrics/active.json.  The JSON response currently contains the total "
+        "number of active projects (``{\"count\": <int>}``).  No arguments are required."
     )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401

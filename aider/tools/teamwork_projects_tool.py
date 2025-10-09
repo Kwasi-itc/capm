@@ -34,10 +34,11 @@ class TeamworkProjectsTool(BaseTool):
 
     name = "teamwork_projects"
     description = (
-        "Fetch projects from Teamwork.  All keyword arguments are forwarded to "
-        "`aider.api.teamwork_projects.list_projects`, so you can pass any of "
-        "Teamwork’s supported list-projects query parameters (eg "
-        "`searchTerm`, `pageSize`, `projectStatuses`, `onlyStarredProjects`, …)."
+        "List projects that are visible to the authenticated Teamwork user.  Every keyword "
+        "argument you provide is forwarded as a query-string parameter to Teamwork’s *List "
+        "Projects* endpoint, so you can use the full range of filters such as "
+        "`searchTerm=\"Website\"`, `pageSize=100`, `projectStatuses=[\"active\",\"late\"]`, "
+        "`onlyStarredProjects=True`, etc."
     )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
