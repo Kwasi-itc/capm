@@ -46,6 +46,7 @@ __all__ = [
     "active_projects_metrics",
     "health_projects_metrics",
     "owners_projects_metrics",
+    "list_project_updates",
 ]
 
 
@@ -264,3 +265,30 @@ def owners_projects_metrics(query: Optional[Dict[str, Any]] = None, **query_para
     """
     params = {**(query or {}), **query_params}
     return _get("/projects/metrics/owners.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Project updates
+# --------------------------------------------------------------------------- #
+def list_project_updates(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /projects/updates.json – Return project-update messages from every
+    project the authenticated user can access.
+
+    Any query-string filter documented for the endpoint may be supplied, e.g.:
+
+    • updatedAfter, createdAfter (str ISO date)  
+    • projectStatus (str) – active | current | late | upcoming | completed | deleted  
+    • orderBy ('date' | 'color' | 'health' | 'project' | 'user') with orderMode asc|desc  
+    • projectId (int) – restrict to a single project  
+    • pageSize (int, default 50), page (int, default 1)  
+    • Boolean flags such as skipCounts, showDeleted, reactions, onlyStarredProjects, etc.  
+    • list filters: projectTagIds, projectStatuses, projectOwnerIds, projectIds, projectHealths…
+
+    Returns
+    -------
+    requests.Response
+        JSON payload containing the list of updates.
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/projects/updates.json", params=_serialize_params(params))
