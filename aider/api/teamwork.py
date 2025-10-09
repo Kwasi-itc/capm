@@ -25,7 +25,7 @@ __all__ = ["TeamworkClient", "get", "post", "put", "patch", "delete"]
 class TeamworkClient(ApiClient):
     """
     Thin :pyclass:`aider.api.ApiClient` wrapper that pre-configures the base
-    URL and Authorization header for Teamwork.
+    URL and HTTP Basic authentication for Teamwork.
 
     Parameters
     ----------
@@ -55,12 +55,14 @@ class TeamworkClient(ApiClient):
         domain = domain or os.getenv("TEAMWORK_DOMAIN") or "itconsortium"
 
         base_url = f"https://{domain}.teamwork.com"
-        # Teamwork accepts the token as basic auth user with no password *or*
-        # as a Bearer header.  Bearer keeps things simple here.
+        # Teamwork uses HTTP *Basic* auth where the API token is the **username**
+        # and the password can be any dummy value.  We therefore rely on the
+        # built-in requests ``auth`` mechanism instead of a Bearer header.
         headers = kwargs.pop("headers", {})
-        headers["Authorization"] = f"Bearer {api_key}"
-
         super().__init__(base_url=base_url, headers=headers, **kwargs)
+
+        # username = api_key, password = "x" (ignored by Teamwork)
+        self.session.auth = (api_key, "x")
 
 
 # --------------------------------------------------------------------------- #
