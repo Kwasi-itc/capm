@@ -10,7 +10,7 @@ Likewise, the Teamwork sub-domain can be passed in via *domain* or
 detected from ``TEAMWORK_DOMAIN``.  A minimal usage example::
 
     from aider.api.teamwork import get               # or TeamworkClient()
-    users = get("/people.json").json()["people"]
+    projects = get("/projects.json").json()["projects"]
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ class TeamworkClient(ApiClient):
         # ``TEAMWORK_DOMAIN`` in the environment.
         domain = domain or os.getenv("TEAMWORK_DOMAIN") or "itconsortium"
 
-        base_url = f"https://{domain}.teamwork.com"
+        base_url = f"https://{domain}.teamwork.com/projects/api/v3"
         # Teamwork uses HTTP *Basic* auth where the API token is the **username**
         # and the password can be any dummy value.  We therefore rely on the
         # built-in requests ``auth`` mechanism instead of a Bearer header.
