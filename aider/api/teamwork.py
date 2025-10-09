@@ -33,7 +33,7 @@ class TeamworkClient(ApiClient):
         Personal access token.  Falls back to the ``TEAMWORK_API`` environment
         variable if omitted.
     domain:
-        Teamwork sub-domain, eg ``mycompany`` for ``https://mycompany.teamwork.com``.
+        Teamwork sub-domain, eg ``itconsortium`` for ``https://itconsortium.teamwork.com``.
         Falls back to ``TEAMWORK_DOMAIN`` env var.
     """
 
@@ -49,11 +49,10 @@ class TeamworkClient(ApiClient):
                 "Teamwork API token not provided and TEAMWORK_API environment variable is not set"
             )
 
-        domain = domain or os.getenv("TEAMWORK_DOMAIN")
-        if not domain:
-            raise ValueError(
-                "Teamwork domain not provided and TEAMWORK_DOMAIN environment variable is not set"
-            )
+        # Fall back to a project-wide default so callers don’t have to supply it
+        # every time.  Override this by passing *domain* or setting
+        # ``TEAMWORK_DOMAIN`` in the environment.
+        domain = domain or os.getenv("TEAMWORK_DOMAIN") or "itconsortium"
 
         base_url = f"https://{domain}.teamwork.com"
         # Teamwork accepts the token as basic auth user with no password *or*
