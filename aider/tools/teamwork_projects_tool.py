@@ -19,6 +19,7 @@ from typing import Any, Dict
 
 from aider.tools.base_tool import BaseTool
 from aider.api import teamwork_projects as tw_projects
+from aider.api import ApiError
 
 
 class TeamworkProjectsTool(BaseTool):
@@ -48,5 +49,12 @@ class TeamworkProjectsTool(BaseTool):
             Any query parameters accepted by Teamwork’s *List Projects* API,
             eg: ``searchTerm="Website", pageSize=100``.
         """
-        response = tw_projects.list_projects(**kwargs)
-        return response.json()
+        try:
+            response = tw_projects.list_projects(**kwargs)
+            return response.json()
+        except ApiError as api_exc:
+            # Handle explicit API failures (non-2xx, transport errors, etc.)
+            return {"error": str(api_exc)}
+        except Exception as exc:  # pragma: no cover
+            # Catch-all so the LLM receives a meaningful message instead of a traceback
+            return {"error": f"Unexpected error: {exc}"}
