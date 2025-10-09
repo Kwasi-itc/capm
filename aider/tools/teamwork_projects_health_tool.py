@@ -26,9 +26,20 @@ class TeamworkProjectsHealthTool(BaseTool):
 
     name = "teamwork_projects_health"
     description = (
-        "Return the number of projects in each health category (good/ok/bad/not_set) that the "
-        "authenticated user can access.  Accepts the same filters as Teamwork’s endpoint, e.g. "
-        "`projectStatus=\"active\"`, `onlyStarredProjects=True`, `projectTagIds=[1,2]`, etc."
+        "Return a count of projects in each health category (good / ok / bad / not_set) that the "
+        "authenticated user can access.  Supports all filters of the Teamwork *healths* metrics "
+        "endpoint, including:\n"
+        "  • projectStatus (str) – active | current | late | upcoming | completed | deleted\n"
+        "  • projectStatuses (list[str]) – same values as above\n"
+        "  • onlyStarredProjects (bool)\n"
+        "  • matchAllProjectTags (bool)\n"
+        "  • projectTagIds (list[int])\n"
+        "  • projectOwnerIds (list[int])\n"
+        "  • projectIds (list[int])\n"
+        "  • projectHealths (list[int]) – 0 (not set), 1 (bad), 2 (ok), 3 (good)\n"
+        "  • projectCompanyIds (list[int])\n"
+        "  • projectCategoryIds (list[int])\n"
+        "and any other query parameter documented by Teamwork."
     )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401

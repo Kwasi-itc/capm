@@ -34,11 +34,19 @@ class TeamworkProjectsTool(BaseTool):
 
     name = "teamwork_projects"
     description = (
-        "List projects that are visible to the authenticated Teamwork user.  Every keyword "
-        "argument you provide is forwarded as a query-string parameter to Teamwork’s *List "
-        "Projects* endpoint, so you can use the full range of filters such as "
-        "`searchTerm=\"Website\"`, `pageSize=100`, `projectStatuses=[\"active\",\"late\"]`, "
-        "`onlyStarredProjects=True`, etc."
+        "List projects the authenticated Teamwork user can access.  All keyword arguments you "
+        "pass are forwarded as query-string parameters to Teamwork’s List-Projects endpoint.  "
+        "Common parameters include:\n"
+        "  • searchTerm (str) – filter by project name\n"
+        "  • pageSize (int) – items per page (default 50)\n"
+        "  • page (int) – page number (default 1)\n"
+        "  • projectStatuses (list[str]) – active | current | late | upcoming | completed | deleted\n"
+        "  • projectType (str) – filter by project type\n"
+        "  • orderBy (str) – name, duedate, companyname, etc.\n"
+        "  • orderMode (str) – asc | desc\n"
+        "  • onlyStarredProjects (bool)\n"
+        "  • includeStats / includeProjectUserInfo (bool)\n"
+        "and any other parameter accepted by the API."
     )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
