@@ -75,6 +75,42 @@ def list_projects(query: Optional[Dict[str, Any]] = None, **query_params):
     """
     GET /projects.json - List projects visible to the authenticated user.
 
+    Any of the query-string parameters supported by Teamwork’s “List
+    Projects” endpoint can be supplied either via the *query* dict or as
+    keyword arguments.  Below is the most commonly used subset (see the
+    official docs for the exhaustive list):
+
+    =======================================================================
+    updatedAfter                     str   – return projects updated > date
+    timeMode                         str   – ``timelogs`` | ``estimated``
+    searchTerm                       str   – filter by project name
+    reportType                       str   – ``project`` | ``health`` (def: project)
+    reportTimezone                   str   – timezone for report dates
+    reportFormat                     str   – ``csv`` | ``html`` | ``pdf`` | ``xls``
+    projectType                      str   – restrict to project type
+    orderMode                        str   – ``asc`` | ``desc`` (def: asc)
+    orderBy                          str   – ``name`` | ``duedate`` | … (def: name)
+    pageSize                         int   – items per page   (def: 50)
+    page                             int   – page number      (def: 1)
+    onlyStarredProjects              bool  – starred only
+    onlyArchivedProjects             bool  – archived only
+    projectStatuses                  list  – eg ``["active","late"]``
+    projectIds                       list  – restrict to specific IDs
+    includeStats                     bool  – include status counts
+    includeProjectUserInfo           bool  – include user-specific data
+    =======================================================================
+
+    Examples
+    --------
+        # basic call
+        list_projects()
+
+        # with explicit parameters
+        list_projects(searchTerm="Website", pageSize=100)
+
+        # with list parameters
+        list_projects(projectStatuses=["active", "late"], onlyStarredProjects=True)
+
     Parameters
     ----------
     query:

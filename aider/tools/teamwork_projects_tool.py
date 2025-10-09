@@ -31,7 +31,12 @@ class TeamworkProjectsTool(BaseTool):
     """
 
     name = "teamwork_projects"
-    description = "Return a list of Teamwork projects with optional filters."
+    description = (
+        "Fetch projects from Teamwork.  All keyword arguments are forwarded to "
+        "`aider.api.teamwork_projects.list_projects`, so you can pass any of "
+        "Teamwork’s supported list-projects query parameters (eg "
+        "`searchTerm`, `pageSize`, `projectStatuses`, `onlyStarredProjects`, …)."
+    )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
         """
