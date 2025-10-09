@@ -16,6 +16,7 @@ Typical usage inside the aider CLI::
 from __future__ import annotations
 
 from typing import Any, Dict
+import json
 
 from aider.tools.base_tool import BaseTool
 from aider.api import teamwork_projects as tw_projects
@@ -51,10 +52,9 @@ class TeamworkProjectsTool(BaseTool):
         """
         try:
             response = tw_projects.list_projects(**kwargs)
-            return response.json()
+            # Always return a *string* so upstream token counting never sees a dict.
+            return json.dumps(response.json(), ensure_ascii=False)
         except ApiError as api_exc:
-            # Handle explicit API failures (non-2xx, transport errors, etc.)
-            return {"error": str(api_exc)}
+            return json.dumps({"error": str(api_exc)}, ensure_ascii=False)
         except Exception as exc:  # pragma: no cover
-            # Catch-all so the LLM receives a meaningful message instead of a traceback
-            return {"error": f"Unexpected error: {exc}"}
+            return json.dumps({"error": f"Unexpected error: {exc}"}, ensure_ascii=False)
