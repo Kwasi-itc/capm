@@ -372,6 +372,8 @@ python-dateutil==2.9.0.post0
     # via
     #   -c requirements/common-constraints.txt
     #   posthog
+python-dotenv==1.1.1
+    # via litellm
 pyyaml==6.0.2
     # via
     #   -c requirements/common-constraints.txt

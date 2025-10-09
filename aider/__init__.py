@@ -55,6 +55,4 @@ def _load_dotenv() -> None:
 # Ensure .env variables are available early in startup
 _load_dotenv()
 
-_teamwork_api = _os.getenv("TEAMWORK_API")
-if _teamwork_api:
-    print(f"TEAMWORK_API={_teamwork_api}")
+
