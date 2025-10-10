@@ -50,6 +50,7 @@ __all__ = [
     "project_updates",
     "project_tasks",
     "project_tasklists",
+    "list_tasklists",
     "list_project_categories",
 ]
 
@@ -400,6 +401,36 @@ def project_tasklists(
     """
     params = {**(query or {}), **query_params}
     return _get(f"/projects/{project_id}/tasklists.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Task-lists across *all* projects
+# --------------------------------------------------------------------------- #
+def list_tasklists(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /tasklists.json – Return task-lists visible to the authenticated user
+    across *all* projects.
+
+    This supports the exact same query-string parameters as the per-project
+    endpoint (``updatedAfter``, ``searchTerm``, ``orderMode``, ``pageSize``,
+    flags such as ``showPrivate`` / ``completedOnly`` / ``skipCounts``, list
+    filters like ``projectIds`` / ``ids`` / ``include`` and all the
+    ``fields[...]`` selectors).
+
+    Parameters
+    ----------
+    query:
+        Optional dict with query parameters.
+    **query_params:
+        Additional query parameters as keyword arguments.
+
+    Returns
+    -------
+    requests.Response
+        JSON body shaped like ``{"tasklists": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/tasklists.json", params=_serialize_params(params))
 
 
 # --------------------------------------------------------------------------- #
