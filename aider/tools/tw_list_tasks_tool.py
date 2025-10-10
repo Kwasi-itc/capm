@@ -43,6 +43,7 @@ class ListTasksTool(BaseTool):
     )
     parameters: Dict[str, Any] = {
         "type": "object",
+        "properties": {},  # empty schema – rely on additionalProperties for flexibility
         "additionalProperties": True,  # schema left open due to huge parameter set
     }
 
