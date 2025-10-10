@@ -52,6 +52,7 @@ __all__ = [
     "project_tasklists",
     "list_tasklists",
     "tasklist_tasks",
+    "create_task",
     "get_tasklist",
     "list_project_categories",
 ]
@@ -499,6 +500,52 @@ def tasklist_tasks(
     """
     params = {**(query or {}), **query_params}
     return _get(f"/tasklists/{tasklist_id}/tasks.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Create task in a task-list
+# --------------------------------------------------------------------------- #
+def create_task(
+    tasklist_id: int | str,
+    data: Dict[str, Any],
+    **kwargs,
+):
+    """
+    POST /tasklists/{tasklistId}/tasks.json – Create a *new* task in the
+    specified task-list.
+
+    The JSON *data* payload can contain any keys allowed by the Teamwork
+    endpoint such as ``task``, ``tags``, ``attachments``, ``taskOptions``,
+    ``card``, ``workflows``…  For example::
+
+        create_task(
+            987654,
+            {
+                "task": {
+                    "name": "Write release notes",
+                    "description": "Draft for v1.4",
+                    "startDate": "2025-10-01",
+                    "dueDate": "2025-10-05",
+                },
+                "tags": [{"name": "documentation"}],
+            }
+        )
+
+    Parameters
+    ----------
+    tasklist_id:
+        Numeric Teamwork task-list ID that will hold the new task.
+    data:
+        Dict representing the JSON body to send.
+    **kwargs:
+        Extra arguments forwarded to :pyfunc:`requests.post`.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload with the newly created task object.
+    """
+    return _post(f"/tasklists/{tasklist_id}/tasks.json", json=data, **kwargs)
 
 
 # --------------------------------------------------------------------------- #
