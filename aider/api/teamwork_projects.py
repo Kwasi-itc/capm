@@ -51,6 +51,7 @@ __all__ = [
     "project_tasks",
     "project_tasklists",
     "list_tasklists",
+    "get_tasklist",
     "list_project_categories",
 ]
 
@@ -431,6 +432,38 @@ def list_tasklists(query: Optional[Dict[str, Any]] = None, **query_params):
     """
     params = {**(query or {}), **query_params}
     return _get("/tasklists.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Single task-list
+# --------------------------------------------------------------------------- #
+def get_tasklist(
+    tasklist_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /tasklists/{tasklistId}.json – Retrieve one specific task-list.
+
+    Supports the full range of query parameters accepted by the list endpoints
+    (updatedAfter, include lists, fields[...], showPrivate/deleted/completed,
+    pagination, etc.).
+
+    Parameters
+    ----------
+    tasklist_id:
+        Teamwork task-list ID.
+    query / **query_params:
+        Optional query-string filters.
+
+    Returns
+    -------
+    requests.Response
+        The JSON payload looks like ``{"tasklist": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/tasklists/{tasklist_id}.json", params=_serialize_params(params))
 
 
 # --------------------------------------------------------------------------- #
