@@ -51,6 +51,7 @@ __all__ = [
     "project_tasks",
     "project_tasklists",
     "list_tasklists",
+    "list_tasks",
     "tasklist_tasks",
     "create_task",
     "get_tasklist",
@@ -434,6 +435,40 @@ def list_tasklists(query: Optional[Dict[str, Any]] = None, **query_params):
     """
     params = {**(query or {}), **query_params}
     return _get("/tasklists.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Tasks across *all* projects
+# --------------------------------------------------------------------------- #
+def list_tasks(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /tasks.json – Return tasks visible to the authenticated user across all
+    projects and task-lists.
+
+    This endpoint supports the **very large** set of query parameters offered by
+    Teamwork’s *Get all tasks* API, including but not limited to:
+
+    • Date filters – updatedAfter/Before, dueAfter/Before, createdAfter/Before …  
+    • taskFilter presets – ``all``, ``overdue``, ``today`` …  
+    • searchTerm, priority, orderBy & orderMode, pagination (pageSize/page)  
+    • Boolean flags – showDeleted, onlyUnplanned, completedOnly, skipCounts, …  
+    • List filters – tags, tagIds, tasklistIds, projectIds, projectStatuses, …  
+    • Advanced custom field filter syntax: ``customField[10][eq]=Option1``
+
+    Parameters
+    ----------
+    query:
+        Optional dictionary containing query parameters.
+    **query_params:
+        Additional query parameters passed as keyword arguments.
+
+    Returns
+    -------
+    requests.Response
+        JSON body shaped like ``{"tasks": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/tasks.json", params=_serialize_params(params))
 
 
 # --------------------------------------------------------------------------- #
