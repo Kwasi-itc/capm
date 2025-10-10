@@ -49,6 +49,7 @@ __all__ = [
     "list_project_updates",
     "project_updates",
     "project_tasks",
+    "list_project_categories",
 ]
 
 
@@ -364,3 +365,37 @@ def project_tasks(
     """
     params = {**(query or {}), **query_params}
     return _get(f"/projects/{project_id}/tasks.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Project categories
+# --------------------------------------------------------------------------- #
+def list_project_categories(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /projectcategories.json – List project categories visible to the
+    authenticated user.
+
+    Any query-string filter supported by the Teamwork endpoint may be supplied,
+    including:
+
+    • searchTerm (str) – filter by category name  
+    • onlyStarredProjects (bool) – include only starred projects in counts  
+    • projectStatuses (list[str]) – restrict to specific project statuses  
+    • ids (list[int]) – restrict to specific category IDs  
+    • fields[projectcategories] (list[str]) – restrict returned fields
+      (``id``, ``name``, ``color``, ``count``, ``parent``, ``parentId``)
+
+    Parameters
+    ----------
+    query:
+        Optional explicit dict of query parameters.
+    **query_params:
+        Additional query parameters passed as keyword arguments.
+
+    Returns
+    -------
+    requests.Response
+        The JSON body looks like ``{"projectcategories": [...], ...}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/projectcategories.json", params=_serialize_params(params))
