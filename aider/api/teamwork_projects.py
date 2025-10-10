@@ -49,6 +49,7 @@ __all__ = [
     "list_project_updates",
     "project_updates",
     "project_tasks",
+    "project_tasklists",
     "list_project_categories",
 ]
 
@@ -365,6 +366,40 @@ def project_tasks(
     """
     params = {**(query or {}), **query_params}
     return _get(f"/projects/{project_id}/tasks.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Project tasklists
+# --------------------------------------------------------------------------- #
+def project_tasklists(
+    project_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /projects/{projectId}/tasklists.json – List task-lists that belong to a
+    single project.
+
+    Any query parameter accepted by Teamwork’s “Get tasklists in a project”
+    endpoint can be supplied via *query* or **query_params, for example:
+
+    • updatedAfter (str ISO) – filter by last update date  
+    • searchTerm (str) – free-text search  
+    • orderMode (“asc” | “desc”), orderBy (“displayorder”, “name”, …)  
+    • pagination: pageSize (int, default 50), page (int, default 1)  
+    • showPrivate / showDeleted / showCompleted / completedOnly (bool flags)  
+    • include (list[str]) – eg “defaultTasks”, “companies”, “milestones”…  
+    • ids / projectIds / projectCompanyIds (list[int]) – filtering by IDs  
+    • fields[tasklists] / fields[users] / … – field selection
+
+    Returns
+    -------
+    requests.Response
+        JSON body like ``{"tasklists": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/projects/{project_id}/tasklists.json", params=_serialize_params(params))
 
 
 # --------------------------------------------------------------------------- #
