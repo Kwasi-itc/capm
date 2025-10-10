@@ -20,12 +20,17 @@ class CreateTaskTool(BaseTool):
     name = "create_task"
     description = (
         "Create a new task inside a specific Teamwork *task-list*.\n\n"
-        "Required parameters:\n"
-        "• tasklistId (int) – the task-list to create the task in\n"
-        "• task (object) – Task details (name, description, dates, assignees …)\n\n"
-        "Optional parameters mirror the Teamwork API body structure and may "
-        "include attachments, tags, taskOptions, card, workflows, predecessors, "
-        "attachmentOptions, etc."
+        "Required path parameter:\n"
+        "• tasklistId (int) – ID of the parent task-list\n\n"
+        "JSON body parameters:\n"
+        "• task (object, required) – core task details (name, description, dates, assignees …)\n"
+        "• tags (array[object]) – tag objects to attach\n"
+        "• attachmentOptions (object) – options for handling file attachments\n"
+        "• attachments (object) – existing or uploaded attachments to link\n"
+        "• taskOptions (object) – additional task flags/options\n"
+        "• workflows (object) – workflow placement information\n"
+        "• card (object) – Kanban card metadata\n"
+        "• predecessors (array[object]) – predecessor task definitions"
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -34,7 +39,40 @@ class CreateTaskTool(BaseTool):
                 "type": "integer",
                 "description": "Numeric Teamwork task-list ID that will receive the task.",
             },
-            # We keep the schema flexible: allow arbitrary keys except tasklistId
+            "task": {
+                "type": "object",
+                "description": "Core task information such as name, description, dates, assignees, etc.",
+            },
+            "tags": {
+                "type": "array",
+                "items": {"type": "object"},
+                "description": "Tag objects to assign to the task.",
+            },
+            "attachmentOptions": {
+                "type": "object",
+                "description": "Options controlling attachment handling.",
+            },
+            "attachments": {
+                "type": "object",
+                "description": "Attachment payload linking existing or uploaded files.",
+            },
+            "taskOptions": {
+                "type": "object",
+                "description": "Additional task options and flags.",
+            },
+            "workflows": {
+                "type": "object",
+                "description": "Information about workflow stage/column placement.",
+            },
+            "card": {
+                "type": "object",
+                "description": "Kanban card metadata associated with the task.",
+            },
+            "predecessors": {
+                "type": "array",
+                "items": {"type": "object"},
+                "description": "Predecessor relations for the new task.",
+            },
         },
         "required": ["tasklistId", "task"],
         "additionalProperties": True,
