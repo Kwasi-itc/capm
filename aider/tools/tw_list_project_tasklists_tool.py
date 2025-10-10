@@ -20,9 +20,10 @@ class ListProjectTasklistsTool(BaseTool):
     # ------------------------------------------------------------------ #
     name = "list_project_tasklists"
     description = (
-        "List task-lists that belong to a single Teamwork project.  Supports the "
-        "full set of query-string filters documented by the API such as pagination, "
-        "searchTerm, ordering, status flags, include lists, etc."
+        "Return all *task-lists* within a specified Teamwork project, with "
+        "optional server-side filtering (updatedAfter, searchTerm, projectType…), "
+        "rich sorting, pagination and the ability to embed related resources "
+        "(defaultTasks, milestones, companies, workflow stages, …)."
     )
     parameters: Dict[str, Any] = {
         "type": "object",

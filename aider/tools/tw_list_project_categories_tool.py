@@ -21,9 +21,10 @@ class ListProjectCategoriesTool(BaseTool):
     # ------------------------------------------------------------------ #
     name = "list_project_categories"
     description = (
-        "Return the list of Teamwork project categories that the authenticated "
-        "user can access.  Supports filtering by name, starred projects, "
-        "statuses, IDs and limiting the returned fields."
+        "Retrieve the catalogue of *project categories* visible to the current "
+        "user, including colour, parent-child hierarchy and project counts. "
+        "Allows filtering by name, starred-project flag, project status, specific "
+        "IDs and selective field projection."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
