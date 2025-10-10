@@ -22,9 +22,13 @@ class ListProjectCategoriesTool(BaseTool):
     name = "list_project_categories"
     description = (
         "Retrieve the catalogue of *project categories* visible to the current "
-        "user, including colour, parent-child hierarchy and project counts. "
-        "Allows filtering by name, starred-project flag, project status, specific "
-        "IDs and selective field projection."
+        "user, including colour, parent-child hierarchy and project counts.\n\n"
+        "Accepted query parameters:\n"
+        "• searchTerm (str) – filter by category name\n"
+        "• onlyStarredProjects (bool) – restrict counts to starred projects\n"
+        "• projectStatuses (list[str]) – filter by project status\n"
+        "• ids (list[int]) – restrict to specific category IDs\n"
+        "• fields (list[str]) – subset of [id, name, color, count, parent, parentId]"
     )
     parameters: Dict[str, Any] = {
         "type": "object",
