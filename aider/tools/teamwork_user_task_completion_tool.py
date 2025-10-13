@@ -32,11 +32,24 @@ class TeamworkUserTaskCompletionTool(BaseTool):
 
     name = "teamwork_user_task_completion"
     description = (
-        "Retrieve task-completion statistics for a single Teamwork user by calling "
-        "GET /reporting/precanned/usertaskcompletion/{userId}.json.  Supply `user_id` "
-        "and optionally any query parameters supported by the endpoint (userType, "
-        "startDate/endDate, orderBy/orderMode, teamIds, projectIds, fields[…], etc.). "
-        "The JSON response is returned as a UTF-8 string."
+        "Return task-completion metrics for one Teamwork *person* via "
+        "GET /reporting/precanned/usertaskcompletion/{userId}.json.  "
+        "Required parameter: `user_id` (integer).\n\n"
+        "Optional query-string parameters you can pass (all are forwarded verbatim):\n"
+        "  • userType              – account | collaborator | contact\n"
+        "  • startDate / endDate   – date range window for the report (YYYY-MM-DD)\n"
+        "  • updatedAfter          – ISO date-time, include records updated since\n"
+        "  • searchTerm            – free-text search within comment content\n"
+        "  • orderBy               – id | name | overduetasks | completedtasks | projects | …\n"
+        "  • orderMode             – asc | desc  (default asc)\n"
+        "  • pageSize / page       – pagination controls (defaults 50 / 1)\n"
+        "  • teamIds, projectIds, jobRoleIds, ids – comma-separated ID filters\n"
+        "  • selectedColumns       – comma-separated column list for custom report\n"
+        "  • includeArchivedProjects, showDeleted, adminsOnly, skipCounts, onlySiteOwner …\n"
+        "  • fields[...] selectors – eg fields[person]=id,firstName,lastName\n\n"
+        "Any other parameter documented by Teamwork’s API is also accepted.  "
+        "The endpoint’s JSON payload is returned unchanged – but JSON-encoded – "
+        "so the token counter never sees a raw dictionary."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
