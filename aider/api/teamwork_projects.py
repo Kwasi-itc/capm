@@ -61,6 +61,7 @@ __all__ = [
     "late_tasks_metrics",
     "user_task_completion",
     "task_subtasks",
+    "task_comments",
     "create_subtask",
     "delete_task",
 ]
@@ -764,6 +765,57 @@ def create_subtask(
         )
     """
     return _post(f"/tasks/{task_id}/subtasks.json", json=data, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Task comments
+# --------------------------------------------------------------------------- #
+def task_comments(
+    task_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /tasks/{taskId}/comments.json – List comments that belong to a *single*
+    task.
+
+    The endpoint supports a substantial set of filters.  Pass them either via
+    the *query* dictionary or as keyword arguments:
+
+    • updatedAfter / updatedAfterDate (str) – ISO date/time – *updatedAfterDate* is deprecated  
+    • publishedStartDate / publishedEndDate (str) – date range filter  
+    • searchTerm (str) – free-text search within comment body (v1: filterText)  
+    • commentStatus (str) – all | read | unread  
+    • orderBy (str) – date | project | user | type | all   with orderMode asc|desc  
+    • pagination controls – pageSize (int, default 50) and page (int, default 1)  
+    • strictHTML (bool) – enable strict HTML filtering on content  
+    • getReactionsCount (bool) – include reactions count per comment  
+    • list filters – userIds, notifiedUserIds (comma-separated ints)  
+    • include (list[str]) – reactions, users  
+    • fields[users] selector – choose fields to embed for each user
+
+    Examples
+    --------
+        # basic list
+        task_comments(123456)
+
+        # unread comments updated after yesterday, newest first
+        task_comments(
+            123456,
+            commentStatus="unread",
+            updatedAfter="2025-10-12T00:00:00Z",
+            orderBy="date",
+            orderMode="desc",
+        )
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"comments": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/tasks/{task_id}/comments.json", params=_serialize_params(params))
 
 
 # --------------------------------------------------------------------------- #
