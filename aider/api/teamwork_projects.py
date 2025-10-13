@@ -58,6 +58,7 @@ __all__ = [
     "list_project_categories",
     "completed_tasks_metrics",
     "late_tasks_metrics",
+    "delete_task",
 ]
 
 
@@ -609,6 +610,28 @@ def create_task(
         JSON payload with the newly created task object.
     """
     return _post(f"/tasklists/{tasklist_id}/tasks.json", json=data, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Delete task
+# --------------------------------------------------------------------------- #
+def delete_task(task_id: int | str, **kwargs):
+    """
+    DELETE /tasks/{taskId}.json – Delete an existing task and all its subtasks.
+
+    Parameters
+    ----------
+    task_id:
+        Numeric Teamwork task ID to delete.
+    **kwargs:
+        Extra arguments forwarded to :pyfunc:`requests.delete`.
+
+    Returns
+    -------
+    requests.Response
+        Typically empty body with 204 No Content status on success.
+    """
+    return _delete(f"/tasks/{task_id}.json", **kwargs)
 
 
 # --------------------------------------------------------------------------- #
