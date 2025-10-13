@@ -59,6 +59,7 @@ __all__ = [
     "list_project_categories",
     "completed_tasks_metrics",
     "late_tasks_metrics",
+    "task_subtasks",
     "delete_task",
 ]
 
@@ -566,6 +567,50 @@ def get_tasklist(
 # --------------------------------------------------------------------------- #
 # Task-list tasks
 # --------------------------------------------------------------------------- #
+def task_subtasks(
+    task_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /tasks/{taskId}/subtasks.json – List *sub-tasks* that belong to the
+    specified parent task.
+
+    The endpoint accepts the **same rich filter set** as the generic list-tasks
+    API, including advanced custom-field filters using the
+    ``customField[id][op]=value`` pattern where *op* = like | not-like | eq |
+    not | lt | gt | any.
+
+    Examples
+    --------
+        # list every sub-task
+        task_subtasks(987654)
+
+        # only completed sub-tasks updated after a date
+        task_subtasks(
+            987654,
+            taskFilter="completed",
+            updatedAfter="2025-01-01",
+            **{"customField[10][eq]": "Option1"},
+        )
+
+    Parameters
+    ----------
+    task_id:
+        Numeric Teamwork parent task ID.
+    query / **query_params:
+        Optional query parameters documented by Teamwork.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"tasks": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/tasks/{task_id}/subtasks.json", params=_serialize_params(params))
+
+
 def tasklist_tasks(
     tasklist_id: int | str,
     *,
