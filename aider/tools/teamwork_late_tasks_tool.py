@@ -24,10 +24,10 @@ class TeamworkLateTasksTool(BaseTool):
 
     name = "teamwork_late_tasks"
     description = (
-        "Return the total count of late tasks visible to the authenticated "
-        "user by calling GET /tasks/metrics/late.json on Teamwork. "
-        "No arguments are required. Any keyword arguments supplied are forwarded "
-        "as query-string parameters."
+        "Fetch the total number of *late* (overdue) tasks visible to the authenticated Teamwork "
+        "user via GET /tasks/metrics/late.json. The endpoint returns a tiny JSON payload like "
+        "{\"count\": 3}; that body is returned as a UTF-8 string. Keyword arguments, if provided, "
+        "are passed straight through as query-string parameters."
     )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401

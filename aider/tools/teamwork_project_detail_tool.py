@@ -23,10 +23,10 @@ class TeamworkProjectDetailTool(BaseTool):
 
     name = "teamwork_project_detail"
     description = (
-        "Retrieve detailed information for a single Teamwork project identified by "
-        "``project_id`` (int).  Any extra keyword arguments you supply are forwarded "
-        "as query-string parameters so you can take full advantage of Teamwork’s "
-        "*Get Project* filters.  Common options include:\n"
+        "Retrieve the complete JSON description of one Teamwork project by calling "
+        "GET /projects/{projectId}.json.  Pass the numeric `project_id`; any extra keyword "
+        "arguments are forwarded verbatim as query-string parameters so you can leverage "
+        "Teamwork’s extensive filter set (custom fields, status filters, pagination, etc.).\n"
         "  • projectCustomField[<id>][<op>] – advanced custom-field filtering where "
         "    <op> is one of eq | not | like | not-like | lt | gt | any\n"
         "  • updatedAfter, searchTerm, reportType / reportFormat, projectType\n"

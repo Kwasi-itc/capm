@@ -24,10 +24,11 @@ class TeamworkCompletedTasksTool(BaseTool):
 
     name = "teamwork_completed_tasks"
     description = (
-        "Return the total count of completed tasks visible to the authenticated "
-        "user by calling GET /tasks/metrics/complete.json on Teamwork. "
-        "No arguments are required. Any keyword arguments supplied are forwarded "
-        "as query-string parameters."
+        "Fetch the total number of *completed* tasks the authenticated Teamwork user can access "
+        "by calling GET /tasks/metrics/complete.json. The endpoint replies with a minimal JSON "
+        "object such as {\"count\": 42}; this payload is forwarded unchanged – but JSON-encoded – "
+        "back to the LLM.  No positional arguments are required; any additional keyword arguments "
+        "are appended to the request as query-string parameters."
     )
 
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401

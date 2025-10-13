@@ -26,10 +26,11 @@ class TeamworkDeleteTaskTool(BaseTool):
 
     name = "teamwork_delete_task"
     description = (
-        "Delete a task (and its subtasks) on Teamwork. "
-        "Required argument: task_id (int). If the optional flag confirm=true is supplied "
-        "the deletion is executed immediately. Otherwise the tool will *interactively* "
-        "ask the user to confirm the destructive action at the console."
+        "Permanently delete a task – and all of its subtasks – in Teamwork by issuing "
+        "DELETE /tasks/{taskId}.json. Supply the numeric `task_id`.  Safety guard: pass "
+        "confirm=true to skip the interactive yes/no prompt; otherwise the tool asks for "
+        "confirmation in the console before proceeding. On success it returns "
+        "{\"status\": \"deleted\", \"task_id\": <id>} or relays the API’s JSON error body."
     )
     parameters: Dict[str, Any] = {
         "type": "object",

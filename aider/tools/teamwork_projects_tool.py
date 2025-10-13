@@ -34,8 +34,10 @@ class TeamworkProjectsTool(BaseTool):
 
     name = "teamwork_projects"
     description = (
-        "List projects the authenticated Teamwork user can access.  All keyword arguments you "
-        "pass are forwarded as query-string parameters to Teamwork’s List-Projects endpoint.  "
+        "List projects the authenticated Teamwork user can access by calling "
+        "GET /projects.json.  All keyword arguments you pass are forwarded as query-string "
+        "parameters to Teamwork’s List-Projects endpoint, and the raw JSON response is "
+        "returned as a string.  "
         "Common parameters include:\n"
         "  • searchTerm (str) – filter by project name\n"
         "  • pageSize (int) – items per page (default 50)\n"

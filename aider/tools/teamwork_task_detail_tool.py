@@ -26,9 +26,11 @@ class TeamworkTaskDetailTool(BaseTool):
 
     name = "teamwork_task_detail"
     description = (
-        "Return detailed information for a single Teamwork task identified by `task_id` (int). "
-        "Additional keyword arguments are passed through as query parameters, including custom "
-        "field filters using the syntax `customField[id][op]=value`."
+        "Retrieve the full JSON representation of a single Teamwork task via "
+        "GET /tasks/{taskId}.json. Provide the numeric `task_id` and optionally any "
+        "query-string filters supported by the endpoint – including advanced custom-field "
+        "constraints such as `customField[10][eq]=Option1`. The response body is returned, "
+        "JSON-encoded, as a string."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
