@@ -56,6 +56,7 @@ __all__ = [
     "create_task",
     "get_tasklist",
     "list_project_categories",
+    "completed_tasks_metrics",
 ]
 
 
@@ -229,6 +230,19 @@ def active_projects_metrics(**kwargs):
         The JSON body looks like ``{"count": <int>, ...}``.
     """
     return _get("/projects/metrics/active.json", **kwargs)
+
+
+def completed_tasks_metrics(**kwargs):
+    """
+    GET /tasks/metrics/complete.json – Return the total number of completed
+    tasks visible to the authenticated user.
+
+    Returns
+    -------
+    requests.Response
+        JSON body like ``{"count": <int>}``.
+    """
+    return _get("/tasks/metrics/complete.json", **kwargs)
 
 
 def health_projects_metrics(query: Optional[Dict[str, Any]] = None, **query_params):
