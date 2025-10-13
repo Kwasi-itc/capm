@@ -59,6 +59,7 @@ __all__ = [
     "list_project_categories",
     "completed_tasks_metrics",
     "late_tasks_metrics",
+    "user_task_completion",
     "task_subtasks",
     "create_subtask",
     "delete_task",
@@ -261,6 +262,49 @@ def late_tasks_metrics(**kwargs):
         JSON body shaped like ``{"count": <int>}``.
     """
     return _get("/tasks/metrics/late.json", **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# User task‐completion report
+# --------------------------------------------------------------------------- #
+def user_task_completion(
+    user_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /reporting/precanned/usertaskcompletion/{userId}.json – Retrieve task
+    completion statistics for a *single* user (person).
+
+    Any query parameter accepted by Teamwork’s endpoint may be supplied either
+    via the *query* dict or as keyword arguments.  This includes:
+
+    • userType              – account | collaborator | contact  
+    • updatedAfter          – ISO date/time string  
+    • startDate / endDate   – date range for the report  
+    • searchTerm            – filter by comment content  
+    • orderBy / orderMode   – name, id, completedtasks … with asc|desc  
+    • pagination & flags    – pageSize, page, skipCounts, showDeleted, …  
+    • list filters          – teamIds, projectIds, jobRoleIds, ids, …  
+    • include / fields[…] selectors
+
+    Examples
+    --------
+        user_task_completion(42)
+        user_task_completion(42, startDate="2025-01-01", endDate="2025-06-30")
+        user_task_completion(42, **{"fields[person]": "id,firstName,lastName"})
+
+    Returns
+    -------
+    requests.Response
+        JSON payload containing the person object and completion stats.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(
+        f"/reporting/precanned/usertaskcompletion/{user_id}.json",
+        params=_serialize_params(params),
+    )
 
 
 def health_projects_metrics(query: Optional[Dict[str, Any]] = None, **query_params):
