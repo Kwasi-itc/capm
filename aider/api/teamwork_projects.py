@@ -52,6 +52,7 @@ __all__ = [
     "project_tasklists",
     "list_tasklists",
     "list_tasks",
+    "get_task",
     "tasklist_tasks",
     "create_task",
     "get_tasklist",
@@ -498,6 +499,36 @@ def list_tasks(query: Optional[Dict[str, Any]] = None, **query_params):
     """
     params = {**(query or {}), **query_params}
     return _get("/tasks.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Single task
+# --------------------------------------------------------------------------- #
+def get_task(
+    task_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /tasks/{taskId}.json – Retrieve one specific task.
+
+    All query parameters accepted by Teamwork’s *Get a task* endpoint can be
+    supplied either via the *query* dict or as keyword arguments.
+    This includes advanced custom-field filters in the form
+    ``customField[id][op]=value`` where *op* is one of
+    like | not-like | eq | not | lt | gt | any.
+
+    Examples
+    --------
+        # basic request
+        get_task(987654)
+
+        # filter by custom field id 10 equals "Option1"
+        get_task(987654, **{"customField[10][eq]": "Option1"})
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/tasks/{task_id}.json", params=_serialize_params(params))
 
 
 # --------------------------------------------------------------------------- #
