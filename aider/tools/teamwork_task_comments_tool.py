@@ -52,9 +52,62 @@ class TeamworkTaskCommentsTool(BaseTool):
     parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
-            "task_id": {"type": "integer", "description": "Numeric Teamwork task ID"},
+            # ----------------------------- required ----------------------------- #
+            "task_id": {
+                "type": "integer",
+                "description": "Numeric Teamwork task ID (parent task)",
+            },
+            # ----------------------------- filters ------------------------------ #
+            "updatedAfter": {"type": "string", "description": "ISO timestamp"},
+            "updatedAfterDate": {
+                "type": "string",
+                "description": "DEPRECATED – use updatedAfter",
+            },
+            "publishedStartDate": {"type": "string", "description": "ISO date string"},
+            "publishedEndDate": {"type": "string", "description": "ISO date string"},
+            "searchTerm": {"type": "string", "description": "Free-text search"},
+            "commentStatus": {
+                "type": "string",
+                "enum": ["all", "read", "unread"],
+                "description": "Filter by read/unread",
+            },
+            # ---------------------------- ordering ------------------------------ #
+            "orderBy": {
+                "type": "string",
+                "enum": ["all", "date", "project", "user", "type"],
+                "description": "Sort column",
+            },
+            "orderMode": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "description": "Sort direction",
+            },
+            # --------------------------- pagination ----------------------------- #
+            "pageSize": {"type": "integer", "description": "Items per page"},
+            "page": {"type": "integer", "description": "Page number"},
+            # ----------------------------- flags -------------------------------- #
+            "strictHTML": {"type": "boolean"},
+            "getReactionsCount": {"type": "boolean"},
+            # ---------------------------- list filters -------------------------- #
+            "userIds": {
+                "type": "string",
+                "description": "Comma-separated user IDs",
+            },
+            "notifiedUserIds": {
+                "type": "string",
+                "description": "Comma-separated user IDs notified",
+            },
+            "include": {
+                "type": "string",
+                "description": "Comma-separated list: reactions,users",
+            },
+            "fields[users]": {
+                "type": "string",
+                "description": "Comma-separated user field names",
+            },
         },
         "required": ["task_id"],
+        # Still allow any other, less-common query parameter
         "additionalProperties": True,
     }
 
