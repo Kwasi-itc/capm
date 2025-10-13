@@ -60,6 +60,7 @@ __all__ = [
     "completed_tasks_metrics",
     "late_tasks_metrics",
     "task_subtasks",
+    "create_subtask",
     "delete_task",
 ]
 
@@ -686,6 +687,39 @@ def create_task(
         JSON payload with the newly created task object.
     """
     return _post(f"/tasklists/{tasklist_id}/tasks.json", json=data, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Create sub-task under a parent task
+# --------------------------------------------------------------------------- #
+def create_subtask(
+    task_id: int | str,
+    data: Dict[str, Any],
+    **kwargs,
+):
+    """
+    POST /tasks/{taskId}/subtasks.json – Create a *new* sub-task beneath the
+    given parent task.
+
+    The JSON *data* body supports the same structure as the generic
+    create-task endpoint (``task``, ``tags``, ``attachments``, ``taskOptions``,
+    ``card``, ``workflows`` …).
+
+    Example
+    -------
+        create_subtask(
+            112233,
+            {
+                "task": {
+                    "name": "Write unit tests",
+                    "description": "Cover edge-cases",
+                    "dueDate": "2025-11-01",
+                },
+                "tags": [{"name": "testing"}],
+            }
+        )
+    """
+    return _post(f"/tasks/{task_id}/subtasks.json", json=data, **kwargs)
 
 
 # --------------------------------------------------------------------------- #
