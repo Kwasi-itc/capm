@@ -51,6 +51,14 @@ class TeamworkProjectsTool(BaseTool):
         "and any other parameter accepted by the API."
     )
 
+    # Accept any combination of query parameters supported by the List-Projects API
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": True,
+    }
+
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
         """
         Execute the tool.

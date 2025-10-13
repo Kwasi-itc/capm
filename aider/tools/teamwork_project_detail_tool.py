@@ -38,6 +38,15 @@ class TeamworkProjectDetailTool(BaseTool):
         "token counter, ready to be parsed or displayed by the LLM."
     )
 
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "project_id": {"type": "integer", "description": "Numeric Teamwork project ID"},
+        },
+        "required": ["project_id"],
+        "additionalProperties": True,
+    }
+
     def run(self, project_id: int, **kwargs: Dict[str, Any]):  # noqa: D401
         try:
             resp = tw_projects.get_project_details(project_id, **kwargs)

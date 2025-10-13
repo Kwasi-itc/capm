@@ -30,6 +30,14 @@ class TeamworkLateTasksTool(BaseTool):
         "are passed straight through as query-string parameters."
     )
 
+    # Accept any extra query parameter supported by the endpoint (date ranges, pagination, etc.)
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": True,
+    }
+
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
         try:
             resp = tw_projects.late_tasks_metrics(**kwargs)

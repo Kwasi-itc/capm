@@ -43,6 +43,7 @@ class TeamworkDeleteTaskTool(BaseTool):
             },
         },
         "required": ["task_id"],
+        "additionalProperties": True,
     }
 
     def run(self, task_id: int, confirm: bool = False, **kwargs: Dict[str, Any]):  # noqa: D401

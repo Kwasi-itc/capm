@@ -48,7 +48,7 @@ class TeamworkCreateSubtaskTool(BaseTool):
             },
         },
         "required": ["task_id", "payload"],
-        "additionalProperties": False,
+        "additionalProperties": True,
     }
 
     def run(self, task_id: int, payload: Dict[str, Any], **kwargs: Dict[str, Any]):  # noqa: D401
