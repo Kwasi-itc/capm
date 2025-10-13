@@ -27,10 +27,9 @@ class TeamworkDeleteTaskTool(BaseTool):
     name = "teamwork_delete_task"
     description = (
         "Delete a task (and its subtasks) on Teamwork. "
-        "Required argument: task_id (int). "
-        "For safety you must also pass confirm=true. "
-        "If confirm is false or omitted the tool will abort and instruct you to re-run "
-        "with confirmation."
+        "Required argument: task_id (int). If the optional flag confirm=true is supplied "
+        "the deletion is executed immediately. Otherwise the tool will *interactively* "
+        "ask the user to confirm the destructive action at the console."
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -46,11 +45,15 @@ class TeamworkDeleteTaskTool(BaseTool):
     }
 
     def run(self, task_id: int, confirm: bool = False, **kwargs: Dict[str, Any]):  # noqa: D401
+        # ------------------------------------------------------------------
+        # Interactive safeguard
+        # ------------------------------------------------------------------
         if not confirm:
-            return (
-                "Deletion aborted – confirmation flag missing. "
-                "Re-invoke teamwork_delete_task with confirm=true to proceed."
-            )
+            answer = input(
+                f"Are you sure you want to DELETE task {task_id}? [y/N]: "
+            ).strip().lower()
+            if answer not in ("y", "yes"):
+                return "Deletion cancelled."
 
         try:
             resp = tw_projects.delete_task(task_id, **kwargs)
