@@ -35,6 +35,7 @@ from .teamwork import get as _get
 from .teamwork import patch as _patch
 from .teamwork import post as _post
 from .teamwork import put as _put
+from .teamwork import _tw
 
 __all__ = [
     "list_projects",
@@ -1275,4 +1276,13 @@ def search(
         **(query or {}),
         **query_params,
     }
-    return _get("/search.json", params=_serialize_params(params))
+    # The *Search* endpoint lives at the **root** of the Teamwork REST API,
+    # not under ``/projects/api/v3`` like the other endpoints.  Build the
+    # absolute URL by stripping the versioned prefix from the client’s base_url.
+    tw = _tw()
+    root_url = tw.base_url.split("/projects/api/v3", 1)[0]
+    return tw.request(
+        "GET",
+        f"{root_url}/search.json",
+        params=_serialize_params(params),
+    )
