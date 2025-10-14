@@ -46,7 +46,22 @@ class TeamworkProjectTasksTool(BaseTool):
         "`orderBy`/`orderMode`, pagination (`pageSize`, `page`), boolean flags "
         "(`showDeleted`, `onlyStarredProjects`, …) plus advanced custom-field filters "
         "using the `customField[<id>][<op>]` syntax."
+    "The JSON response (``{\"tasks\": [...], \"meta\": {...}}``) is returned **as a UTF-8 string** "
+    "so downstream code never sees a raw dict."
     )
+
+    # JSON-schema for tool invocation
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "project_id": {
+                "type": "integer",
+                "description": "Numeric Teamwork project ID whose tasks will be listed",
+            },
+        },
+        "required": ["project_id"],
+        "additionalProperties": True,
+    }
 
     def run(self, project_id: int, **kwargs: Dict[str, Any]):  # noqa: D401
         try:
