@@ -251,8 +251,14 @@ def create_project(
         created project.
     """
     params = {**(query or {}), **query_params}
-    return _post(
-        "/projects.json",
+    # The *Create Project* endpoint lives at the **root** of the Teamwork API,
+    # not under ``/projects/api/v3``.  Build an absolute URL by stripping that
+    # versioned prefix from the configured base URL.
+    tw = _tw()
+    root_url = tw.base_url.split("/projects/api/v3", 1)[0]
+    return tw.request(
+        "POST",
+        f"{root_url}/projects.json",
         json=data,
         params=_serialize_params(params),
     )
