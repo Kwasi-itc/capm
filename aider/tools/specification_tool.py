@@ -328,6 +328,21 @@ class SpecificationTool(BaseTool):
         reviewer_prompt = templates["reviewer"]
 
         def chat(messages: List[Dict[str, str]]) -> str:
+            """
+            Call the OpenAI chat completion API in a way that works for both the
+            pre-1.0 and 1.x versions of the ``openai`` python package.
+
+            The older (<1.0) package exposes ``openai.ChatCompletion.create`` while
+            the 1.x package moved the entry-point to
+            ``openai.OpenAI().chat.completions.create``.
+            """
+            # Newer `openai>=1.0`
+            if hasattr(openai, "OpenAI"):
+                client = openai.OpenAI()
+                resp = client.chat.completions.create(model=model_name, messages=messages)
+                return resp.choices[0].message.content.strip()
+
+            # Fallback for legacy `openai<1.0`
             resp = openai.ChatCompletion.create(model=model_name, messages=messages)
             return resp.choices[0].message.content.strip()
 
