@@ -214,14 +214,49 @@ def get_project_details(
     return _get(f"/projects/{project_id}.json", params=_serialize_params(params))
 
 
-def create_project(data: Dict[str, Any], **kwargs):
+def create_project(
+    data: Dict[str, Any],
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
     """
-    POST /projects.json - Create a new project.
+    POST /projects.json – Create a *new* project.
 
-    The *data* dict should contain the fields expected by Teamwork,
-    eg: ``{"name": "Site redesign", "description": "...", ...}``.
+    The *data* dict must contain the **project** object exactly as documented
+    by Teamwork, for example::
+
+        {
+            "project": {
+                "name": "New Website",
+                "description": "Marketing site refresh",
+                "use-tasks": True,
+                "use-milestones": True,
+                "category-id": 123,
+                "start-date": "2025-11-01",
+                "end-date": "2026-01-31",
+                "tagIds": "4,7",
+                "projectOwnerId": 456,
+                ...
+            }
+        }
+
+    Optional query-string parameters (``include``, field selectors, etc.) can be
+    supplied either via the *query* dict or as keyword arguments.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"project": {...}}`` containing the newly
+        created project.
     """
-    return _post("/projects.json", json=data, **kwargs)
+    params = {**(query or {}), **query_params}
+    return _post(
+        "/projects.json",
+        json=data,
+        params=_serialize_params(params),
+        **{k: v for k, v in kwargs.items() if k != "params"},
+    )
 
 
 def update_project(project_id: int | str, data: Dict[str, Any], **kwargs):
