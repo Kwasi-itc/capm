@@ -21,9 +21,13 @@ The final, approved specification is returned from ``run()``.
 
 from __future__ import annotations
 
-from typing import List, Dict
+import os
+import json
+from typing import Any, Dict, List
 
-from .base_tool import BaseTool
+import openai
+
+from .base_tool import BaseTool, ToolError
 
 
 DRAFT_PROMPT = """You are DraftAgent, a senior engineer.
@@ -58,36 +62,126 @@ class SpecificationTool(BaseTool):
     """
 
     # Tool metadata understood by the surrounding framework
-    name = "specification"
-    description = "Iteratively draft and review a technical specification document."
-    inputs = ["prompt"]  # single free-form user prompt
-    outputs = ["specification"]  # final approved specification text
+    # Public metadata ----------------------------------------------------------------
+    name = "specification_builder"
+    description = (
+        "Generate a thorough specification document through an internal draft/review "
+        "loop between two LLM agents (drafter & reviewer)."
+    )
+    # JSON-schema for LLM-function calling or UI auto-generation
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "topic": {
+                "type": "string",
+                "description": "Short description of what the specification should cover.",
+            },
+            "spec_type": {
+                "type": "string",
+                "description": "Kind of specification (Technical, Product, API, …).",
+                "default": "Technical",
+            },
+            "iterations": {
+                "type": "integer",
+                "description": "Maximum draft/review cycles.",
+                "minimum": 1,
+                "default": 3,
+            },
+            "model": {
+                "type": "string",
+                "description": "Override the LLM model name (defaults to gpt-4o).",
+            },
+        },
+        "required": ["topic"],
+        "additionalProperties": False,
+    }
 
-    MAX_ITERATIONS = 3
-
-    # --------------------------------------------------------------------- #
-    # Public entry-point expected by BaseTool
-    # --------------------------------------------------------------------- #
-    def run(self, prompt: str, llm, io=None, **kwargs) -> Dict[str, str]:
+    # -------------------------- main entry point -------------------------- #
+    def run(  # noqa: D401
+        self,
+        topic: str,
+        spec_type: str = "Technical",
+        iterations: int = 3,
+        model: str | None = None,
+        **kwargs,
+    ) -> str:
         """
-        Parameters
-        ----------
-        prompt:
-            The user's high-level request or requirements.
-        llm:
-            An object exposing ``chat(messages: List[dict]) -> dict``
-            compatible with `openai.ChatCompletion` format.
-        io:
-            Optional InputOutput for logging / streaming (if available).
+        Draft and iteratively refine a specification until the reviewer approves it.
 
         Returns
         -------
-        dict
-            { "specification": "<markdown document>" }
+        str
+            The final specification markdown (or JSON with note if unapproved).
         """
-        spec = None
-        review_feedback = ""
-        messages: List[Dict[str, str]]
+        model_name = model or "gpt-4o"
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if not openai.api_key:
+            raise ToolError("OPENAI_API_KEY environment variable not set")
+
+        drafter_prompt = (
+            "You are a meticulous specification drafter.\n"
+            "Write a {spec_type} specification for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Produce clear, well-structured markdown with sections, "
+            "requirements, acceptance criteria and glossary."
+        )
+
+        reviewer_prompt = (
+            "You are an exacting reviewer.\n"
+            "Evaluate the specification below. Respond with:\n"
+            " • A bullet list of issues to improve, **or**\n"
+            " • The single word 'APPROVED' if the spec is complete and flawless.\n\n"
+            "Specification:\n\n{spec}"
+        )
+
+        def chat(messages: List[Dict[str, str]]) -> str:
+            resp = openai.ChatCompletion.create(model=model_name, messages=messages)
+            return resp.choices[0].message.content.strip()
+
+        draft: str | None = None
+
+        for _ in range(iterations):
+            if draft is None:
+                draft = chat(
+                    [
+                        {
+                            "role": "system",
+                            "content": drafter_prompt.format(spec_type=spec_type, topic=topic),
+                        }
+                    ]
+                )
+            else:
+                review = chat(
+                    [
+                        {
+                            "role": "system",
+                            "content": reviewer_prompt.format(spec=draft),
+                        }
+                    ]
+                )
+                if review.upper().startswith("APPROVED"):
+                    return draft
+                draft = chat(
+                    [
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are the original drafter. Improve the specification according "
+                                "to the reviewer comments below:\n\n---\n{review}\n---\n\n"
+                                "Current specification:\n{spec}"
+                            ).format(review=review, spec=draft),
+                        }
+                    ]
+                )
+
+        # After max iterations, return latest draft plus note
+        return json.dumps(
+            {
+                "specification": draft,
+                "note": "Returned after reaching max iterations without explicit APPROVED.",
+            },
+            ensure_ascii=False,
+        )
 
         # ----------------------------------------------------------------- #
         # ReAct loop
