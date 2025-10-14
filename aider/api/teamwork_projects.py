@@ -75,6 +75,7 @@ __all__ = [
     "create_notebook",
     "update_notebook",
     "search",
+    "generate_upload_url",
 ]
 
 
@@ -1284,5 +1285,51 @@ def search(
     return tw.request(
         "GET",
         f"{root_url}/search.json",
+        params=_serialize_params(params),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# File-upload helper – generate presigned S3 URL
+# --------------------------------------------------------------------------- #
+def generate_upload_url(
+    file_name: str,
+    file_size: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /projects/api/v1/pendingfiles/presignedurl.json – Step 1 of the preferred
+    Teamwork file-upload flow.  Returns a temporary S3 URL plus a *ref* to attach
+    the file to tasks, comments, etc.
+
+    Parameters
+    ----------
+    file_name:
+        Name of the file including extension, e.g. ``report.pdf``.
+    file_size:
+        Size of the file **in bytes**.
+    query / **query_params:
+        Reserved for future optional parameters; forwarded verbatim.
+
+    Returns
+    -------
+    requests.Response
+        JSON shaped like ``{"ref": "tf_…", "url": "https://…amazonaws.com/…", …}``.
+    """
+    params = {
+        "fileName": file_name,
+        "fileSize": file_size,
+        **(query or {}),
+        **query_params,
+    }
+
+    # The presigned-url endpoint lives under **/api/v1** (not v3).
+    tw = _tw()
+    root_url = tw.base_url.split("/projects/api/v3", 1)[0]
+    return tw.request(
+        "GET",
+        f"{root_url}/projects/api/v1/pendingfiles/presignedurl.json",
         params=_serialize_params(params),
     )
