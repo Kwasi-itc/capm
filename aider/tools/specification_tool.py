@@ -178,7 +178,7 @@ class SpecificationTool(BaseTool):
             raise ToolError("OPENAI_API_KEY environment variable not set")
 
         # Select prompts based on requested document type
-        templates = SPEC_PROMPTS.get(spec_type, SPEC_PROMPTS["Specification"])
+        templates = self.SPEC_PROMPTS.get(spec_type, self.SPEC_PROMPTS["Specification"])
         drafter_prompt = templates["drafter"]
         reviewer_prompt = templates["reviewer"]
 
