@@ -66,6 +66,7 @@ __all__ = [
     "list_notebooks",
     "create_subtask",
     "delete_task",
+    "delete_notebook",
 ]
 
 
@@ -840,6 +841,25 @@ def delete_task(task_id: int | str, **kwargs):
         Typically empty body with 204 No Content status on success.
     """
     return _delete(f"/tasks/{task_id}.json", **kwargs)
+
+
+def delete_notebook(notebook_id: int | str, **kwargs):
+    """
+    DELETE /notebooks/{notebookId}.json – Delete an existing notebook.
+
+    Parameters
+    ----------
+    notebook_id:
+        Numeric Teamwork notebook ID to delete.
+    **kwargs:
+        Extra arguments forwarded to :pyfunc:`requests.delete`.
+
+    Returns
+    -------
+    requests.Response
+        Typically empty body with 204 No Content status on success.
+    """
+    return _delete(f"/notebooks/{notebook_id}.json", **kwargs)
 
 
 # --------------------------------------------------------------------------- #
