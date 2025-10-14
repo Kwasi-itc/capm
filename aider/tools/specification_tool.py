@@ -78,7 +78,24 @@ class SpecificationTool(BaseTool):
             },
             "spec_type": {
                 "type": "string",
-                "description": "Kind of specification (Technical, Product, API, …).",
+                "description": (
+                    "Kind of specification. Allowed values: "
+                    "Technical, Product, API, Architecture, Security, Data, "
+                    "UX, Testing, Deployment, Business, Research."
+                ),
+                "enum": [
+                    "Technical",
+                    "Product",
+                    "API",
+                    "Architecture",
+                    "Security",
+                    "Data",
+                    "UX",
+                    "Testing",
+                    "Deployment",
+                    "Business",
+                    "Research",
+                ],
                 "default": "Technical",
             },
             "iterations": {
@@ -98,6 +115,7 @@ class SpecificationTool(BaseTool):
 
 
     # -------------------------- main entry point -------------------------- #
+
     def run(  # noqa: D401
         self,
         topic: str,
@@ -140,7 +158,6 @@ class SpecificationTool(BaseTool):
             return resp.choices[0].message.content.strip()
 
         draft: str | None = None
-
 
         for _ in range(iterations):
             if draft is None:
