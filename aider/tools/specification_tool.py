@@ -17,6 +17,9 @@ The tool runs a simple ReAct-style loop:
 3. Loop continues (max 3 iterations) until APPROVED.
 
 The final, approved specification is returned from ``run()``.
+
+The agents may call other ``aider.tools`` such as **WebSearch** or **WebFetch**
+to gather information whenever helpful during drafting or review.
 """
 
 from __future__ import annotations
@@ -66,7 +69,9 @@ class SpecificationTool(BaseTool):
     name = "specification_builder"
     description = (
         "Generate a thorough specification document through an internal draft/review "
-        "loop between two LLM agents (drafter & reviewer)."
+        "loop between two LLM agents (drafter & reviewer). "
+        "Agents may transparently invoke research tools like WebSearch or WebFetch "
+        "to collect information before writing or revising the document."
     )
     # JSON-schema for LLM-function calling or UI auto-generation
     parameters: Dict[str, Any] = {
@@ -125,7 +130,8 @@ class SpecificationTool(BaseTool):
             "Topic: {topic}\n\n"
             "The document must include: goals, non-goals, stakeholders, functional "
             "and non-functional requirements, acceptance criteria, glossary, "
-            "open questions and an implementation plan. Provide clear markdown headings."
+            "open questions and an implementation plan. Provide clear markdown headings. "
+            "Use WebSearch when external references or domain standards are required."
         ),
         "reviewer": (
             "You are an exacting reviewer.\n"
