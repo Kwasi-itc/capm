@@ -255,7 +255,6 @@ def create_project(
         "/projects.json",
         json=data,
         params=_serialize_params(params),
-        **{k: v for k, v in kwargs.items() if k != "params"},
     )
 
 
