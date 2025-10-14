@@ -156,16 +156,29 @@ class SpecificationTool(BaseTool):
     },
     "Product": {
         "drafter": (
-            "You are a product manager creating a product requirements document (PRD).\n"
+            "You are a product manager creating a **Project Requirements Document (PRD)**.\n"
             "Write the PRD for the topic below.\n\n"
             "Topic: {topic}\n\n"
-            "Document must include: problem statement, goals, personas, user stories, "
-            "functional & non-functional requirements, success metrics, assumptions, "
-            "out-of-scope items and release plan.\n"
-            "Feel free to WebSearch competitive products or market data."
+            "The document MUST contain the following sections **in order**:\n"
+            "1. Acronyms & Conventions table\n"
+            "2. Problem Statement\n"
+            "3. Proposed Solution and Use-Case Scenario(s)\n"
+            "4. Stakeholders & Personas (include role and relevance)\n"
+            "5. In-Scope Items\n"
+            "6. Out-of-Scope Items\n"
+            "7. Functional Requirements – present **each** requirement as a *Use Case* with:\n"
+            "   • Use Case ID\n   • Summary\n   • Basic Flow\n   • Alternate Flow\n"
+            "   • Preconditions\n   • Post-conditions\n   • Acceptance Criteria\n"
+            "8. Non-functional Requirements\n"
+            "9. Success Criteria explained and how they will be achieved\n"
+            "10. Assumptions\n\n"
+            "Use clear markdown headings and tables where helpful. You may invoke the "
+            "WebSearch tool to gather competitive or market data."
         ),
         "reviewer": (
-            "Review the PRD below. If complete respond 'APPROVED', else list issues.\n\nPRD:\n\n{spec}"
+            "Review the PRD below and verify that every required section is present and complete. "
+            "If the document is fully satisfactory respond with 'APPROVED'; otherwise provide a "
+            "bullet list of deficiencies.\n\nPRD:\n\n{spec}"
         ),
     },
     "API": {
