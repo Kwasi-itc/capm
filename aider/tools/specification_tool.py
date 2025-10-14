@@ -144,12 +144,151 @@ class SpecificationTool(BaseTool):
             "sequence diagrams or interaction flows, data models, technology choices "
             "with rationale, scalability/security/reliability considerations, risks, "
             "and a migration or rollout plan. Use markdown with appropriate mermaid "
-            "diagrams where helpful."
+            "diagrams where helpful.\n\n"
+            "You may call the WebSearch tool to research best practices or reference "
+            "architectures. Cite sources when relevant."
         ),
         "reviewer": (
             "You are a principal architect reviewing the architecture below.\n"
             "Respond with a concise bullet list of deficiencies **or** 'APPROVED' "
             "if the document is production-ready.\n\nArchitecture:\n\n{spec}"
+        ),
+    },
+    "Technical": {
+        "drafter": (
+            "You are a senior engineer tasked with producing a technical specification.\n"
+            "Draft a complete document for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include: overview, context, detailed requirements, system design, "
+            "data models, algorithms, constraints, acceptance criteria and glossary.\n"
+            "Use WebSearch when external standards or libraries need to be referenced."
+        ),
+        "reviewer": (
+            "Critically review the technical specification below and reply with either "
+            "'APPROVED' or a bullet list of improvements.\n\nSpecification:\n\n{spec}"
+        ),
+    },
+    "Product": {
+        "drafter": (
+            "You are a product manager creating a product requirements document (PRD).\n"
+            "Write the PRD for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Document must include: problem statement, goals, personas, user stories, "
+            "functional & non-functional requirements, success metrics, assumptions, "
+            "out-of-scope items and release plan.\n"
+            "Feel free to WebSearch competitive products or market data."
+        ),
+        "reviewer": (
+            "Review the PRD below. If complete respond 'APPROVED', else list issues.\n\nPRD:\n\n{spec}"
+        ),
+    },
+    "API": {
+        "drafter": (
+            "You are an API designer.\n"
+            "Produce a REST/GraphQL API specification for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include: high-level overview, authentication, versioning, all endpoints "
+            "with methods, parameters, request/response JSON schemas, error codes, "
+            "rate limits and examples. Use markdown tables where helpful.\n"
+            "Use WebSearch to reference RFCs or industry guidelines."
+        ),
+        "reviewer": (
+            "Review the API specification below and respond with 'APPROVED' or issues.\n\nAPI Spec:\n\n{spec}"
+        ),
+    },
+    "Architecture": {
+        "drafter": (
+            "Draft a software architecture overview for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Provide context, key quality attributes, component diagrams, data flow, "
+            "technology stack choices, scalability, security and deployment view.\n"
+            "Leverage WebSearch to justify technology decisions."
+        ),
+        "reviewer": (
+            "Assess the architecture document below. Return 'APPROVED' or improvement points.\n\nDoc:\n\n{spec}"
+        ),
+    },
+    "Security": {
+        "drafter": (
+            "Create a security specification for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include threat model, attack surfaces, security controls, encryption, "
+            "access management, compliance requirements, monitoring and incident response.\n"
+            "You may WebSearch relevant standards (eg NIST, OWASP) and cite them."
+        ),
+        "reviewer": (
+            "Review the security spec and reply 'APPROVED' or list gaps.\n\nSpec:\n\n{spec}"
+        ),
+    },
+    "Data": {
+        "drafter": (
+            "Write a data specification / data model document for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include entity-relationship diagrams, schemas, data ownership, retention, "
+            "quality requirements, privacy considerations and migration strategy.\n"
+            "Use WebSearch for best-practice references."
+        ),
+        "reviewer": (
+            "Evaluate the data specification below. Reply 'APPROVED' or improvement list.\n\nSpec:\n\n{spec}"
+        ),
+    },
+    "UX": {
+        "drafter": (
+            "Create a UX design specification for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include personas, user journeys, information architecture, interaction flows, "
+            "wireframe descriptions and accessibility requirements.\n"
+            "Leverage WebSearch to reference design guidelines."
+        ),
+        "reviewer": (
+            "Review the UX spec and return 'APPROVED' or issues.\n\nSpec:\n\n{spec}"
+        ),
+    },
+    "Testing": {
+        "drafter": (
+            "Produce a comprehensive test plan for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Cover test objectives, scope, types of testing, environments, data, "
+            "automation strategy, entry/exit criteria and schedule.\n"
+            "WebSearch may be used to gather framework best practices."
+        ),
+        "reviewer": (
+            "Assess the test plan. Respond 'APPROVED' or list deficiencies.\n\nPlan:\n\n{spec}"
+        ),
+    },
+    "Deployment": {
+        "drafter": (
+            "Draft a deployment specification for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Describe environments, CI/CD pipeline, infrastructure as code, "
+            "rollback strategy, monitoring, scaling and operational runbooks.\n"
+            "Use WebSearch to reference tooling or cloud patterns."
+        ),
+        "reviewer": (
+            "Review the deployment spec and reply 'APPROVED' or improvement bullets.\n\nSpec:\n\n{spec}"
+        ),
+    },
+    "Business": {
+        "drafter": (
+            "Create a business requirements document for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include problem statement, objectives, KPIs, stakeholders, financial "
+            "analysis, risks, assumptions and timeline.\n"
+            "WebSearch may be invoked for market data."
+        ),
+        "reviewer": (
+            "Review the business requirements below and respond 'APPROVED' or issues.\n\nBRD:\n\n{spec}"
+        ),
+    },
+    "Research": {
+        "drafter": (
+            "Write a research proposal for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include background, literature review (use WebSearch to cite sources), "
+            "research questions, methodology, expected outcomes, timeline and ethics.\n"
+        ),
+        "reviewer": (
+            "Evaluate the research proposal. Reply with 'APPROVED' or required changes.\n\nProposal:\n\n{spec}"
         ),
     },
 }
