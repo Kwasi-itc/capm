@@ -1310,6 +1310,14 @@ def create_notebook(
     requests.Response
         JSON payload shaped like ``{"notebook": {...}}``.
     """
+    # Teamwork expects the **HTML body** in the `contents` field.
+    # For convenience, silently convert a caller-supplied `"content"` key
+    # (singular) into the correct `"contents"` form to avoid 400 errors.
+    if isinstance(data, dict) and "notebook" in data:
+        nb = data["notebook"]
+        if "content" in nb and "contents" not in nb:
+            nb["contents"] = nb.pop("content")
+
     params = {**(query or {}), **query_params}
     return _post(
         f"/projects/{project_id}/notebooks.json",
