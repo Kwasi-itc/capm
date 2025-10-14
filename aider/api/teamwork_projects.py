@@ -63,6 +63,7 @@ __all__ = [
     "task_subtasks",
     "task_comments",
     "notebook_comments",
+    "list_notebooks",
     "create_subtask",
     "delete_task",
 ]
@@ -914,3 +915,58 @@ def notebook_comments(
         f"/notebooks/{notebook_id}/comments.json",
         params=_serialize_params(params),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Notebooks
+# --------------------------------------------------------------------------- #
+def list_notebooks(query: Optional[Dict[str, Any]] = None, **query_params):
+    """
+    GET /notebooks.json – List notebooks visible to the authenticated user.
+
+    Every query-string filter documented by Teamwork’s *List notebooks* endpoint
+    can be passed either via the *query* dictionary or as keyword arguments.
+
+    Common parameters
+    -----------------
+    updatedAfter / createdAfter (str ISO) – date filters
+    searchTerm (str) – free-text search across name + description
+    projectType (str) – normal | tasklists-template | projects-template
+    projectStatuses (list[str]) – active | current | late | …
+    orderBy / orderMode (str) – dateUpdated/name/project/category + asc|desc
+    pagination – pageSize (int, default 50) & page (int, default 1)
+    Boolean flags – skipCounts, showDeleted, secureOnly, lockedOnly,
+                    includeContents, includeArchivedProjects, getEmoji,
+                    matchAllTags, matchAllProjectTags
+    List filters – tagIds, projectTagIds, projectOwnerIds, projectIds,
+                   projectHealths, projectCompanyIds, projectCategoryIds
+    Include & field selectors – include, fields[users], fields[teams], …
+
+    Examples
+    --------
+        # basic call
+        list_notebooks()
+
+        # secure notebooks updated after a date, newest first
+        list_notebooks(
+            secureOnly=True,
+            updatedAfter="2025-01-01",
+            orderBy="dateUpdated",
+            orderMode="desc",
+            pageSize=100,
+        )
+
+    Parameters
+    ----------
+    query:
+        Optional dict with query parameters.
+    **query_params:
+        Additional query parameters supplied as kwargs.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"notebooks": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get("/notebooks.json", params=_serialize_params(params))
