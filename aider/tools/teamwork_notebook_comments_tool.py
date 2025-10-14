@@ -40,6 +40,13 @@ class TeamworkNotebookCommentsTool(BaseTool):
         "type": "object",
         "properties": {
             "notebook_id": {"type": "integer", "description": "Teamwork notebook ID"},
+            "updatedAfter": {"type": "string"},
+            "searchTerm": {"type": "string"},
+            "orderBy": {"type": "string"},
+            "orderMode": {"type": "string", "enum": ["asc", "desc"]},
+            "pageSize": {"type": "integer", "minimum": 1},
+            "page": {"type": "integer", "minimum": 1},
+            "showDeleted": {"type": "boolean"},
         },
         "required": ["notebook_id"],
         "additionalProperties": True,

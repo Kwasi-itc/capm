@@ -35,7 +35,27 @@ class TeamworkNotebooksTool(BaseTool):
     # No required properties – every parameter is optional and forwarded
     parameters: Dict[str, Any] = {
         "type": "object",
-        "properties": {},
+        "properties": {
+            "updatedAfter": {"type": "string"},
+            "createdAfter": {"type": "string"},
+            "searchTerm": {"type": "string"},
+            "projectType": {
+                "type": "string",
+                "enum": ["normal", "tasklists-template", "projects-template"],
+            },
+            "projectStatuses": {"type": "string"},
+            "orderBy": {
+                "type": "string",
+                "enum": ["name", "project", "dateCreated", "dateUpdated", "category"],
+            },
+            "orderMode": {"type": "string", "enum": ["asc", "desc"]},
+            "pageSize": {"type": "integer", "minimum": 1},
+            "page": {"type": "integer", "minimum": 1},
+            "secureOnly": {"type": "boolean"},
+            "lockedOnly": {"type": "boolean"},
+            "showDeleted": {"type": "boolean"},
+            "skipCounts": {"type": "boolean"},
+        },
         "required": [],
         "additionalProperties": True,
     }

@@ -46,6 +46,33 @@ class TeamworkProjectUpdatesByIdTool(BaseTool):
                 "type": "integer",
                 "description": "Numeric Teamwork project ID whose updates will be returned",
             },
+            "updatedAfter": {
+                "type": "string",
+                "description": "Return updates posted/edited after this ISO date",
+            },
+            "createdAfter": {
+                "type": "string",
+                "description": "Return updates created after this ISO date",
+            },
+            "orderBy": {
+                "type": "string",
+                "enum": ["date", "color", "health", "project", "user"],
+            },
+            "orderMode": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+            },
+            "pageSize": {
+                "type": "integer",
+                "minimum": 1,
+            },
+            "page": {
+                "type": "integer",
+                "minimum": 1,
+            },
+            "showDeleted": {
+                "type": "boolean",
+            },
         },
         "required": ["project_id"],
         "additionalProperties": True,
