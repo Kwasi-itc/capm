@@ -79,11 +79,13 @@ class SpecificationTool(BaseTool):
             "spec_type": {
                 "type": "string",
                 "description": (
-                    "Kind of specification. Allowed values: "
-                    "Technical, Product, API, Architecture, Security, Data, "
-                    "UX, Testing, Deployment, Business, Research."
+                    "Kind of document to generate. Allowed values: "
+                    "Specification, TechnicalArchitecture, Technical, Product, API, "
+                    "Architecture, Security, Data, UX, Testing, Deployment, Business, Research."
                 ),
                 "enum": [
+                    "Specification",
+                    "TechnicalArchitecture",
                     "Technical",
                     "Product",
                     "API",
@@ -96,7 +98,7 @@ class SpecificationTool(BaseTool):
                     "Business",
                     "Research",
                 ],
-                "default": "Technical",
+                "default": "Specification",
             },
             "iterations": {
                 "type": "integer",
