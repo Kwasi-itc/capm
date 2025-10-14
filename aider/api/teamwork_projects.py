@@ -73,6 +73,7 @@ __all__ = [
     "delete_notebook",
     "create_notebook",
     "update_notebook",
+    "search",
 ]
 
 
@@ -1225,3 +1226,53 @@ def create_notebook(
         json=data,
         params=_serialize_params(params),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Search (global)
+# --------------------------------------------------------------------------- #
+def search(
+    search_for: str,
+    search_term: str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /search.json – Perform a full-text search across many Teamwork resources.
+
+    Required parameters
+    -------------------
+    search_for : str
+        Resource to search in.  One of::
+
+            projects, notebooks, files, tasks, tasklists, milestones, messages,
+            links, events, people, companies, taskComments, fileComments,
+            notebookComments, milestoneComments, linkComments
+    search_term : str
+        Search expression.  Encode special characters (# [ ]) as per Teamwork’s
+        documentation, e.g. ``%23%5BMy+Tag%5D`` for ``#[My Tag]``.
+
+    Optional filters
+    ----------------
+    projectId              – restrict search to a single project (int or str)  
+    sortOrder              – ``asc`` | ``desc`` (default asc)  
+    includeArchivedProjects – bool  
+    includeCompletedItems   – bool  
+    pageSize               – int (default 50)
+
+    All optional parameters can be provided either via the *query* dictionary
+    or as keyword arguments.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"searchResults": [...], "meta": {...}}``.
+    """
+    params = {
+        "searchFor": search_for,
+        "searchTerm": search_term,
+        **(query or {}),
+        **query_params,
+    }
+    return _get("/search.json", params=_serialize_params(params))
