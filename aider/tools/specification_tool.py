@@ -96,9 +96,6 @@ class SpecificationTool(BaseTool):
         "additionalProperties": False,
     }
 
-    # Legacy constant – kept only so flake8 sees the symbol referenced in
-    # an unreachable code path that remains at the bottom of this file.
-    MAX_ITERATIONS = 0
 
     # -------------------------- main entry point -------------------------- #
     def run(  # noqa: D401
@@ -144,15 +141,6 @@ class SpecificationTool(BaseTool):
 
         draft: str | None = None
 
-        # -----------------------------------------------------------------
-        # Place-holder variables so static analysis (flake8) sees them
-        # defined for the unreachable legacy block further below.
-        # -----------------------------------------------------------------
-        prompt = ""  # noqa: F841
-        spec = None  # noqa: F841
-        review_feedback = ""  # noqa: F841
-        llm = None  # noqa: F841
-        io = None  # noqa: F841
 
         for _ in range(iterations):
             if draft is None:
@@ -196,61 +184,3 @@ class SpecificationTool(BaseTool):
             },
             ensure_ascii=False,
         )
-
-        # ----------------------------------------------------------------- #
-        # ReAct loop
-        # ----------------------------------------------------------------- #
-        for iteration in range(1, self.MAX_ITERATIONS + 1):
-            # 1. DraftAgent creates / revises spec
-            messages = [
-                {"role": "system", "content": DRAFT_PROMPT},
-                {"role": "user", "content": prompt},
-            ]
-            if spec:
-                # Provide reviewer feedback as context for next draft
-                messages.append(
-                    {
-                        "role": "assistant",
-                        "content": spec,
-                    }
-                )
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": review_feedback,
-                    }
-                )
-
-            draft_resp = llm.chat(messages)
-            spec = draft_resp["content"] if isinstance(draft_resp, dict) else draft_resp
-
-            if io:
-                io.tool_output(f"[DraftAgent #{iteration}] produced spec ({len(spec)} chars)")
-
-            # 2. ReviewAgent evaluates
-            review_messages = [
-                {"role": "system", "content": REVIEW_PROMPT},
-                {
-                    "role": "user",
-                    "content": f"Here is the SPECIFICATION:\n\n{spec}",
-                },
-            ]
-            review_resp = llm.chat(review_messages)
-            review_feedback = (
-                review_resp["content"] if isinstance(review_resp, dict) else review_resp
-            )
-
-            if io:
-                io.tool_output(f"[ReviewAgent #{iteration}] feedback:\n{review_feedback}")
-
-            # 3. Check for approval
-            if review_feedback.strip().upper().startswith("APPROVED"):
-                if io:
-                    io.tool_output(f"[SpecificationTool] Approved after {iteration} iteration(s).")
-                return {"specification": spec}
-
-        # Fallback – return latest draft even if unapproved
-        if io:
-            io.tool_warning("[SpecificationTool] Max iterations reached without approval.")
-
-        return {"specification": spec or ""}
