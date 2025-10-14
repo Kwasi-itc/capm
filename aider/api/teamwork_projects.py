@@ -70,6 +70,7 @@ __all__ = [
     "create_subtask",
     "delete_task",
     "delete_notebook",
+    "create_notebook",
     "update_notebook",
 ]
 
@@ -1139,3 +1140,55 @@ def get_notebook(
     """
     params = {**(query or {}), **query_params}
     return _get(f"/notebooks/{notebook_id}.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Create notebook
+# --------------------------------------------------------------------------- #
+def create_notebook(
+    project_id: int | str,
+    data: Dict[str, Any],
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    POST /projects/{projectId}/notebooks.json – Create a *new* notebook in the
+    specified project.
+
+    Parameters
+    ----------
+    project_id:
+        Numeric Teamwork project ID that will own the notebook.
+    data:
+        Dict representing the JSON body to send.  Pass the *notebook* object
+        exactly as documented by Teamwork, e.g.::
+
+            {
+                "notebook": {
+                    "name": "Kick-off notes",
+                    "description": "Introductions and scope",
+                    "isPrivate": False,
+                    "categoryId": 123,
+                    "tags": [{"name": "meeting"}],
+                }
+            }
+
+    query / **query_params:
+        Optional query parameters such as:
+
+        • getEmoji (bool) – whether to parse emoji short-codes  
+        • include="projects,tags,users" to embed related objects  
+        • fields[...] selectors to limit returned columns
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"notebook": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _post(
+        f"/projects/{project_id}/notebooks.json",
+        json=data,
+        params=_serialize_params(params),
+    )
