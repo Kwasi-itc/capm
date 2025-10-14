@@ -81,10 +81,16 @@ class BaseTool(ABC):
     # -------- core attributes (override in subclass) -------------
     name: str = ""
     description: str = ""
+    # Default JSON-schema – subclasses should override or extend this.
+    # By explicitly setting ``additionalProperties`` to True we allow tools
+    # to accept *any* extra keyword arguments unless they opt-in to stricter
+    # validation.  Concrete tools can still set it to False if they want a
+    # closed schema.
     parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {},
         "required": [],
+        "additionalProperties": True,
     }
 
     # -------- helper to expose schema to the LLM -----------------
