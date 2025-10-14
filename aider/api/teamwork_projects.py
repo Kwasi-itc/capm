@@ -63,6 +63,7 @@ __all__ = [
     "task_subtasks",
     "task_comments",
     "notebook_comments",
+    "file_comments",
     "notebook_versions",
     "notebook_version",
     "list_notebooks",
@@ -981,6 +982,38 @@ def notebook_comments(
     params = {**(query or {}), **query_params}
     return _get(
         f"/notebooks/{notebook_id}/comments.json",
+        params=_serialize_params(params),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# File comments
+# --------------------------------------------------------------------------- #
+def file_comments(
+    file_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /files/{fileId}/comments.json – List comments that belong to a single file.
+
+    Parameters
+    ----------
+    file_id:
+        Numeric Teamwork **file** ID.
+    query / **query_params:
+        Optional query-string parameters such as updatedAfter, searchTerm,
+        orderBy/orderMode, pagination controls, include, fields[users], etc.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"comments": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(
+        f"/files/{file_id}/comments.json",
         params=_serialize_params(params),
     )
 
