@@ -31,6 +31,14 @@ class TeamworkCompletedTasksTool(BaseTool):
         "are appended to the request as query-string parameters."
     )
 
+    # Accept any extra query parameters supported by the endpoint.
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": True,
+    }
+
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
         try:
             resp = tw_projects.completed_tasks_metrics(**kwargs)

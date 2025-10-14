@@ -33,6 +33,14 @@ class TeamworkActiveProjectsTool(BaseTool):
         "arguments are required; extra kwargs become query parameters."
     )
 
+    # Accept any extra query parameters supported by the endpoint.
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": True,
+    }
+
     def run(self, **kwargs: Dict[str, Any]):  # noqa: D401
         try:
             resp = tw_projects.active_projects_metrics(**kwargs)
