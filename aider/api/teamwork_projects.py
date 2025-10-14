@@ -62,6 +62,7 @@ __all__ = [
     "user_task_completion",
     "task_subtasks",
     "task_comments",
+    "notebook_comments",
     "create_subtask",
     "delete_task",
 ]
@@ -872,3 +873,44 @@ def list_project_categories(query: Optional[Dict[str, Any]] = None, **query_para
     """
     params = {**(query or {}), **query_params}
     return _get("/projectcategories.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# Notebook comments
+# --------------------------------------------------------------------------- #
+def notebook_comments(
+    notebook_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /notebooks/{notebookId}/comments.json – List comments that belong to a
+    single notebook.
+
+    Any query parameter accepted by Teamwork’s *Get notebook comments* endpoint
+    may be supplied either via the *query* dict or as keyword arguments, e.g.:
+
+    • updatedAfter / updatedBefore (ISO date strings)  
+    • searchTerm (str) – full-text search within comments  
+    • orderBy / orderMode, pagination (pageSize/page)  
+    • Boolean flags such as showDeleted, skipCounts, reactions, …  
+    • list filters – userIds, notifiedUserIds, include, fields[users] …
+
+    Parameters
+    ----------
+    notebook_id:
+        Numeric Teamwork notebook ID.
+    query / **query_params:
+        Optional query-string parameters.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"comments": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(
+        f"/notebooks/{notebook_id}/comments.json",
+        params=_serialize_params(params),
+    )
