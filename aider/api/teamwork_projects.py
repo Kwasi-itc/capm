@@ -68,6 +68,7 @@ __all__ = [
     "create_subtask",
     "delete_task",
     "delete_notebook",
+    "update_notebook",
 ]
 
 
@@ -861,6 +862,49 @@ def delete_notebook(notebook_id: int | str, **kwargs):
         Typically empty body with 204 No Content status on success.
     """
     return _delete(f"/notebooks/{notebook_id}.json", **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Update notebook
+# --------------------------------------------------------------------------- #
+def update_notebook(
+    notebook_id: int | str,
+    data: Dict[str, Any],
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    PATCH /notebooks/{notebookId}.json – Edit an existing notebook.
+
+    Parameters
+    ----------
+    notebook_id:
+        Numeric Teamwork notebook ID to update.
+    data:
+        Dict containing the JSON body with the fields to modify, e.g.::
+
+            {
+                "name": "Project plan v2",
+                "description": "Updated draft",
+                "isPrivate": False,
+            }
+
+        Any keys accepted by Teamwork’s *Edit notebook* endpoint are allowed.
+    query / **query_params:
+        Optional query‐string parameters (getEmoji, include, fields[…], …).
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"notebook": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _patch(
+        f"/notebooks/{notebook_id}.json",
+        json=data,
+        params=_serialize_params(params),
+    )
 
 
 # --------------------------------------------------------------------------- #
