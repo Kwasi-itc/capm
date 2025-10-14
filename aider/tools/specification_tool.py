@@ -116,8 +116,8 @@ class SpecificationTool(BaseTool):
     }
 
 
-# Prompt templates for each spec_type
-SPEC_PROMPTS: Dict[str, Dict[str, str]] = {
+    # Prompt templates for each spec_type
+    SPEC_PROMPTS: Dict[str, Dict[str, str]] = {
     "Specification": {
         "drafter": (
             "You are a meticulous specification drafter.\n"
