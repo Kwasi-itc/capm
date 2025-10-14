@@ -85,16 +85,14 @@ class SpecificationTool(BaseTool):
                 "type": "string",
                 "description": (
                     "Kind of document to generate. Allowed values: "
-                    "Specification, TechnicalArchitecture, Technical, Product, API, "
-                    "Architecture, Security, Data, UX, Testing, Deployment, Business, Research."
+                    "TechnicalArchitecture, Technical, Product, API, "
+                    "Security, Data, UX, Testing, Deployment, Business, Research."
                 ),
                 "enum": [
-                    "Specification",
                     "TechnicalArchitecture",
                     "Technical",
                     "Product",
                     "API",
-                    "Architecture",
                     "Security",
                     "Data",
                     "UX",
@@ -103,7 +101,7 @@ class SpecificationTool(BaseTool):
                     "Business",
                     "Research",
                 ],
-                "default": "Specification",
+                "default": "Technical",
             },
             "iterations": {
                 "type": "integer",
@@ -123,24 +121,6 @@ class SpecificationTool(BaseTool):
 
     # Prompt templates for each spec_type
     SPEC_PROMPTS: Dict[str, Dict[str, str]] = {
-    "Specification": {
-        "drafter": (
-            "You are a meticulous specification drafter.\n"
-            "Write a comprehensive specification document for the topic below.\n\n"
-            "Topic: {topic}\n\n"
-            "The document must include: goals, non-goals, stakeholders, functional "
-            "and non-functional requirements, acceptance criteria, glossary, "
-            "open questions and an implementation plan. Provide clear markdown headings. "
-            "Use WebSearch when external references or domain standards are required."
-        ),
-        "reviewer": (
-            "You are an exacting reviewer.\n"
-            "Evaluate the specification below. Respond with:\n"
-            " • A bullet list of issues to improve, **or**\n"
-            " • The single word 'APPROVED' if the spec is complete and flawless.\n\n"
-            "Specification:\n\n{spec}"
-        ),
-    },
     "TechnicalArchitecture": {
         "drafter": (
             "You are a senior solutions architect.\n"
@@ -200,18 +180,6 @@ class SpecificationTool(BaseTool):
         ),
         "reviewer": (
             "Review the API specification below and respond with 'APPROVED' or issues.\n\nAPI Spec:\n\n{spec}"
-        ),
-    },
-    "Architecture": {
-        "drafter": (
-            "Draft a software architecture overview for the topic below.\n\n"
-            "Topic: {topic}\n\n"
-            "Provide context, key quality attributes, component diagrams, data flow, "
-            "technology stack choices, scalability, security and deployment view.\n"
-            "Leverage WebSearch to justify technology decisions."
-        ),
-        "reviewer": (
-            "Assess the architecture document below. Return 'APPROVED' or improvement points.\n\nDoc:\n\n{spec}"
         ),
     },
     "Security": {
@@ -304,7 +272,7 @@ class SpecificationTool(BaseTool):
     def run(  # noqa: D401
         self,
         topic: str,
-        spec_type: str = "Specification",
+        spec_type: str = "Technical",
         iterations: int = 3,
         model: str | None = None,
         **kwargs,
@@ -323,7 +291,7 @@ class SpecificationTool(BaseTool):
             raise ToolError("OPENAI_API_KEY environment variable not set")
 
         # Select prompts based on requested document type
-        templates = self.SPEC_PROMPTS.get(spec_type, self.SPEC_PROMPTS["Specification"])
+        templates = self.SPEC_PROMPTS.get(spec_type, self.SPEC_PROMPTS["Technical"])
         drafter_prompt = templates["drafter"]
         reviewer_prompt = templates["reviewer"]
 
