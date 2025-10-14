@@ -116,12 +116,50 @@ class SpecificationTool(BaseTool):
     }
 
 
+# Prompt templates for each spec_type
+SPEC_PROMPTS: Dict[str, Dict[str, str]] = {
+    "Specification": {
+        "drafter": (
+            "You are a meticulous specification drafter.\n"
+            "Write a comprehensive specification document for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "The document must include: goals, non-goals, stakeholders, functional "
+            "and non-functional requirements, acceptance criteria, glossary, "
+            "open questions and an implementation plan. Provide clear markdown headings."
+        ),
+        "reviewer": (
+            "You are an exacting reviewer.\n"
+            "Evaluate the specification below. Respond with:\n"
+            " • A bullet list of issues to improve, **or**\n"
+            " • The single word 'APPROVED' if the spec is complete and flawless.\n\n"
+            "Specification:\n\n{spec}"
+        ),
+    },
+    "TechnicalArchitecture": {
+        "drafter": (
+            "You are a senior solutions architect.\n"
+            "Create a detailed technical architecture document for the topic below.\n\n"
+            "Topic: {topic}\n\n"
+            "Include: context diagram, component list with responsibilities, "
+            "sequence diagrams or interaction flows, data models, technology choices "
+            "with rationale, scalability/security/reliability considerations, risks, "
+            "and a migration or rollout plan. Use markdown with appropriate mermaid "
+            "diagrams where helpful."
+        ),
+        "reviewer": (
+            "You are a principal architect reviewing the architecture below.\n"
+            "Respond with a concise bullet list of deficiencies **or** 'APPROVED' "
+            "if the document is production-ready.\n\nArchitecture:\n\n{spec}"
+        ),
+    },
+}
+
     # -------------------------- main entry point -------------------------- #
 
     def run(  # noqa: D401
         self,
         topic: str,
-        spec_type: str = "Technical",
+        spec_type: str = "Specification",
         iterations: int = 3,
         model: str | None = None,
         **kwargs,
@@ -139,21 +177,10 @@ class SpecificationTool(BaseTool):
         if not openai.api_key:
             raise ToolError("OPENAI_API_KEY environment variable not set")
 
-        drafter_prompt = (
-            "You are a meticulous specification drafter.\n"
-            "Write a {spec_type} specification for the topic below.\n\n"
-            "Topic: {topic}\n\n"
-            "Produce clear, well-structured markdown with sections, "
-            "requirements, acceptance criteria and glossary."
-        )
-
-        reviewer_prompt = (
-            "You are an exacting reviewer.\n"
-            "Evaluate the specification below. Respond with:\n"
-            " • A bullet list of issues to improve, **or**\n"
-            " • The single word 'APPROVED' if the spec is complete and flawless.\n\n"
-            "Specification:\n\n{spec}"
-        )
+        # Select prompts based on requested document type
+        templates = SPEC_PROMPTS.get(spec_type, SPEC_PROMPTS["Specification"])
+        drafter_prompt = templates["drafter"]
+        reviewer_prompt = templates["reviewer"]
 
         def chat(messages: List[Dict[str, str]]) -> str:
             resp = openai.ChatCompletion.create(model=model_name, messages=messages)
