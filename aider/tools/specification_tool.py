@@ -86,6 +86,7 @@ class SpecificationTool(BaseTool):
             { "specification": "<markdown document>" }
         """
         spec = None
+        review_feedback = ""
         messages: List[Dict[str, str]]
 
         # ----------------------------------------------------------------- #
