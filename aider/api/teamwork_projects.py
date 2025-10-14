@@ -64,6 +64,7 @@ __all__ = [
     "task_comments",
     "notebook_comments",
     "list_notebooks",
+    "get_notebook",
     "create_subtask",
     "delete_task",
     "delete_notebook",
@@ -990,3 +991,38 @@ def list_notebooks(query: Optional[Dict[str, Any]] = None, **query_params):
     """
     params = {**(query or {}), **query_params}
     return _get("/notebooks.json", params=_serialize_params(params))
+
+
+def get_notebook(
+    notebook_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /notebooks/{notebookId}.json – Retrieve one specific notebook.
+
+    All query parameters documented by Teamwork’s *Get a notebook* endpoint can be
+    supplied either via the *query* dict or as keyword arguments. Common examples:
+
+    • updatedAfter (str ISO) – filter by last update date  
+    • projectType (str) – normal | tasklists-template | projects-template  
+    • showDeleted (bool) – include deleted notebooks  
+    • include (list[str]) – projects,tags,users,notebookCategories,companies,teams  
+    • field selectors – fields[users], fields[teams], fields[tags], fields[projects],
+      fields[notebooks], fields[notebookCategories], fields[companies]
+
+    Parameters
+    ----------
+    notebook_id:
+        Numeric Teamwork notebook ID.
+    query / **query_params:
+        Optional query-string parameters accepted by the API.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"notebook": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(f"/notebooks/{notebook_id}.json", params=_serialize_params(params))
