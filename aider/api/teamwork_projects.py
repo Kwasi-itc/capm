@@ -63,6 +63,7 @@ __all__ = [
     "task_subtasks",
     "task_comments",
     "notebook_comments",
+    "notebook_versions",
     "list_notebooks",
     "get_notebook",
     "create_subtask",
@@ -978,6 +979,41 @@ def notebook_comments(
     params = {**(query or {}), **query_params}
     return _get(
         f"/notebooks/{notebook_id}/comments.json",
+        params=_serialize_params(params),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Notebook versions
+# --------------------------------------------------------------------------- #
+def notebook_versions(
+    notebook_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /notebooks/{notebookId}/versions.json – List all saved versions of
+    a single notebook.
+
+    Parameters
+    ----------
+    notebook_id:
+        Numeric Teamwork notebook ID.
+    query / **query_params:
+        Optional query parameters such as:
+
+        • include="users" – embed user objects for the *createdBy* fields  
+        • fields[users]=id,firstName,lastName – restrict user fields
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"versions": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(
+        f"/notebooks/{notebook_id}/versions.json",
         params=_serialize_params(params),
     )
 
