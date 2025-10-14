@@ -33,8 +33,23 @@ class TeamworkProjectUpdatesByIdTool(BaseTool):
         "query parameters, supporting the same filters as the global updates endpoint: "
         "`updatedAfter`, `createdAfter`, `orderBy`/`orderMode`, pagination (`pageSize`, `page`), "
         "boolean flags (`showDeleted`, `reactions`, `onlyStarredProjects`, …) and list filters "
-        "such as `projectTagIds`, `projectOwnerIds`, etc."
+        "such as `projectTagIds`, `projectOwnerIds`, etc. "
+        "The raw JSON payload from Teamwork is returned **as a UTF-8 string** so it can be safely "
+        "handled by the LLM without leaking a Python dict."
     )
+
+    # JSON-schema describing accepted arguments
+    parameters: Dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "project_id": {
+                "type": "integer",
+                "description": "Numeric Teamwork project ID whose updates will be returned",
+            },
+        },
+        "required": ["project_id"],
+        "additionalProperties": True,
+    }
 
     def run(self, project_id: int, **kwargs: Dict[str, Any]):  # noqa: D401
         try:
