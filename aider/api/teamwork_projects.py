@@ -264,11 +264,59 @@ def create_project(
     )
 
 
-def update_project(project_id: int | str, data: Dict[str, Any], **kwargs):
+def update_project(
+    project_id: int | str,
+    data: Dict[str, Any],
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
     """
-    PUT /projects/{id}.json - Update an existing project.
+    PUT /projects/{id}.json – Update an *existing* project.
+
+    The *data* dict must contain the ``project`` object exactly as defined by
+    Teamwork’s API documentation – the same shape accepted by
+    :pyfunc:`create_project`.  Typical minimal example::
+
+        {
+            "project": {
+                "name": "Rebranded Website",
+                "description": "Scope updated after brand workshop",
+                "use-tasks": True,
+                "category-id": 123,
+                "tagIds": "7,9",
+            }
+        }
+
+    Optional query‐string parameters (``include``, field selectors, etc.) can be
+    supplied either via the *query* dict or as keyword arguments.
+
+    Parameters
+    ----------
+    project_id:
+        Numeric Teamwork project ID to update.
+    data:
+        JSON body containing the ``project`` object with the new values.
+    query / **query_params:
+        Additional query parameters forwarded verbatim.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"project": {...}}`` containing the updated
+        project.
     """
-    return _put(f"/projects/{project_id}.json", json=data, **kwargs)
+    params = {**(query or {}), **query_params}
+
+    # The endpoint sits at the API root (…teamwork.com/projects/{id}.json)
+    tw = _tw()
+    root_url = tw.base_url.split("/projects/api/v3", 1)[0]
+    return tw.request(
+        "PUT",
+        f"{root_url}/projects/{project_id}.json",
+        json=data,
+        params=_serialize_params(params),
+    )
 
 
 def delete_project(project_id: int | str, **kwargs):
