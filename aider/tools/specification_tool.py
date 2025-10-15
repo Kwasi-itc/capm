@@ -85,12 +85,11 @@ class SpecificationTool(BaseTool):
                 "type": "string",
                 "description": (
                     "Kind of document to generate. Allowed values: "
-                    "TechnicalArchitecture, Technical, Product, API, "
+                    "TechnicalArchitecture, Product, API, "
                     "Security, Data, UX, Testing, Deployment, Business, Research."
                 ),
                 "enum": [
                     "TechnicalArchitecture",
-                    "Technical",
                     "Product",
                     "API",
                     "Security",
@@ -101,7 +100,7 @@ class SpecificationTool(BaseTool):
                     "Business",
                     "Research",
                 ],
-                "default": "Technical",
+                "default": "TechnicalArchitecture",
             },
             "iterations": {
                 "type": "integer",
@@ -126,11 +125,12 @@ class SpecificationTool(BaseTool):
             "You are a senior solutions architect.\n"
             "Create a detailed technical architecture document for the topic below.\n\n"
             "Topic: {topic}\n\n"
-            "Include: context diagram, component list with responsibilities, "
-            "sequence diagrams or interaction flows, data models, technology choices "
-            "with rationale, scalability/security/reliability considerations, risks, "
-            "and a migration or rollout plan. Use markdown with appropriate mermaid "
-            "diagrams where helpful.\n\n"
+            "Include: overview, context, detailed requirements, system design, "
+            "context diagram, component list with responsibilities, sequence diagrams "
+            "or interaction flows, data models, algorithms, technology choices with "
+            "rationale, scalability/security/reliability considerations, constraints, "
+            "risks, acceptance criteria, glossary, and a migration or rollout plan. "
+            "Use markdown with appropriate mermaid diagrams where helpful.\n\n"
             "You may call the WebSearch tool to research best practices or reference "
             "architectures. Cite sources when relevant."
         ),
@@ -138,20 +138,6 @@ class SpecificationTool(BaseTool):
             "You are a principal architect reviewing the architecture below.\n"
             "Respond with a concise bullet list of deficiencies **or** 'APPROVED' "
             "if the document is production-ready.\n\nArchitecture:\n\n{spec}"
-        ),
-    },
-    "Technical": {
-        "drafter": (
-            "You are a senior engineer tasked with producing a technical specification.\n"
-            "Draft a complete document for the topic below.\n\n"
-            "Topic: {topic}\n\n"
-            "Include: overview, context, detailed requirements, system design, "
-            "data models, algorithms, constraints, acceptance criteria and glossary.\n"
-            "Use WebSearch when external standards or libraries need to be referenced."
-        ),
-        "reviewer": (
-            "Critically review the technical specification below and reply with either "
-            "'APPROVED' or a bullet list of improvements.\n\nSpecification:\n\n{spec}"
         ),
     },
     "Product": {
@@ -285,7 +271,7 @@ class SpecificationTool(BaseTool):
     def run(  # noqa: D401
         self,
         topic: str,
-        spec_type: str = "Technical",
+        spec_type: str = "TechnicalArchitecture",
         iterations: int = 3,
         model: str | None = None,
         **kwargs,
@@ -304,7 +290,7 @@ class SpecificationTool(BaseTool):
             raise ToolError("OPENAI_API_KEY environment variable not set")
 
         # Select prompts based on requested document type
-        templates = self.SPEC_PROMPTS.get(spec_type, self.SPEC_PROMPTS["Technical"])
+        templates = self.SPEC_PROMPTS.get(spec_type, self.SPEC_PROMPTS["TechnicalArchitecture"])
         drafter_prompt = templates["drafter"]
         reviewer_prompt = templates["reviewer"]
 
