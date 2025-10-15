@@ -8,6 +8,7 @@ from typing import Any, Dict
 import os
 import jsonschema
 import logging
+from aider.waiting import WaitingSpinner
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,8 @@ class BaseTool(ABC):
             raise ToolError(f"Invalid arguments for {self.name}: {exc.message}") from exc
 
         try:
-            result = self.run(**args)
+            with WaitingSpinner(f"Running {self.name}"):
+                result = self.run(**args)
             logger.debug("Tool %s completed successfully", self.name)
             return result
         except Exception as exc:  # noqa: BLE001
