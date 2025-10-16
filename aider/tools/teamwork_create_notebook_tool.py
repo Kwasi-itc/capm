@@ -41,7 +41,9 @@ class TeamworkCreateNotebookTool(BaseTool):
         "field as expected by Teamwork. Additional keyword arguments are appended to the query "
         "string, allowing emoji parsing (`getEmoji=false`), inclusion of related objects "
         "(`include=projects,tags`), or field selection via `fields[notebooks]=id,name`. The raw "
-        "JSON response is returned as a UTF-8 string."
+        "JSON response is returned as a UTF-8 string. "
+        "Use this tool whenever you are instructed to add a specification or specification document, "
+        "project requirement or project requirement document, or technical architecture to Teamwork."
     )
 
     parameters: Dict[str, Any] = {
