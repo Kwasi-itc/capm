@@ -53,6 +53,7 @@ __all__ = [
     "project_tasklists",
     "list_tasklists",
     "list_people",
+    "project_people",
     "list_tasks",
     "get_task",
     "tasklist_tasks",
@@ -654,6 +655,49 @@ def list_tasks(query: Optional[Dict[str, Any]] = None, **query_params):
 # People across the account
 # --------------------------------------------------------------------------- #
 def list_people(query: Optional[Dict[str, Any]] = None, **query_params):
+
+    ...
+    return _get("/people.json", params=_serialize_params(params))
+
+
+# --------------------------------------------------------------------------- #
+# People within a single project
+# --------------------------------------------------------------------------- #
+def project_people(
+    project_id: int | str,
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    GET /projects/{projectId}/people.json – List people that belong to one project.
+
+    Accepts the same query parameters as :pyfunc:`list_people` (userType, updatedAfter,
+    searchTerm, orderBy, orderMode, pagination, flags, etc.).
+
+    Parameters
+    ----------
+    project_id:
+        Numeric Teamwork project ID.
+    query / **query_params:
+        Optional query-string parameters.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"people": [...], "meta": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _get(
+        f"/projects/{project_id}/people.json",
+        params=_serialize_params(params),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Single task
+# --------------------------------------------------------------------------- #
+def get_task(
     """
     GET /people.json – List people (users, collaborators, contacts) visible to the
     authenticated user.
