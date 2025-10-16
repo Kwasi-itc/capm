@@ -905,8 +905,13 @@ def comment_task(
         JSON payload shaped like ``{"comment": {...}}``.
     """
     params = {**(query or {}), **query_params}
-    return _post(
-        f"/tasks/{task_id}/comments.json",
+
+    # The *Create Comment* endpoint lives at the API root (not under /projects/api/v3).
+    tw = _tw()
+    root_url = tw.base_url.split("/projects/api/v3", 1)[0]
+    return tw.request(
+        "POST",
+        f"{root_url}/tasks/{task_id}/comments.json",
         json=data,
         params=_serialize_params(params),
     )
