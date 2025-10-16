@@ -832,7 +832,14 @@ def create_task(
     requests.Response
         JSON payload with the newly created task object.
     """
-    return _post(f"/tasklists/{tasklist_id}/tasks.json", json=data, **kwargs)
+    tw = _tw()
+    root_url = tw.base_url.split("/projects/api/v3", 1)[0]
+    return tw.request(
+        "POST",
+        f"{root_url}/tasklists/{tasklist_id}/tasks.json",
+        json=data,
+        **kwargs,
+    )
 
 
 # --------------------------------------------------------------------------- #
