@@ -20,7 +20,7 @@ wbs_md = tool.run(
 )
 ```
 
-The returned string is Markdown – normally a tree or table showing phases,
+The returned string is Markdown – normally a tree (ordered list) showing phases,
 epics, stories / tasks, with IDs, owners, estimates, dependencies, and
 acceptance criteria ready for import into a project-management system.
 """
@@ -51,8 +51,7 @@ Additional context (constraints, requirements, architecture, etc.):
 Guidelines
 ~~~~~~~~~~
 * Break work down into at most 4 hierarchical levels (Phase ▸ Epic ▸ Story ▸ Task).
-* Use a Markdown ordered list or table with columns:
-  ID • Level • Name • Description • Owner (role) • Est. Effort (person-days) • Dependencies
+* Use a **Markdown ordered list** to represent the hierarchy. Each item should include: ID · Level · Name · Description · Owner (role) · Est. Effort (person-days) · Dependencies
 * Ensure IDs are unique and reflect hierarchy (eg `1`, `1.2`, `1.2.3` …).
 * Include **acceptance criteria** for leaf-level tasks.
 * Do **NOT** allocate real people – use generic roles (Backend Dev, QA, PM).
