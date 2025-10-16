@@ -655,10 +655,53 @@ def list_tasks(query: Optional[Dict[str, Any]] = None, **query_params):
 # People across the account
 # --------------------------------------------------------------------------- #
 def list_people(query: Optional[Dict[str, Any]] = None, **query_params):
-
-    params = {**(query or {}), **query_params}
-    return _get("/people.json", params=_serialize_params(params))
-
+     """
+     GET /people.json – List people (users, collaborators, contacts) visible to the
+     authenticated user.
+                                                                                                                                                   
+     Any query parameter accepted by Teamwork’s *List people* endpoint can be supplied
+     either via the *query* dict or as keyword arguments.  Common options include:
+                                                                                                                                                   
+     =======================================================================
+     userType                       str   – account | collaborator | contact
+     updatedAfter                   str   – ISO date/time – return users updated after date
+     searchTerm                     str   – free-text search on name/email
+     orderMode                      str   – asc | desc   (default asc)
+     orderBy                        str   – name | namecaseinsensitive | company (default name)
+     lastLoginAfter                 str   – ISO date/time – filter by last login
+     pageSize                       int   – items per page (1-500, default 50)
+     page                           int   – page number (default 1)
+     skipCounts                     bool  – performance hint
+     showDeleted                    bool  – include deleted people (default False)
+     orderPrioritiseCurrentUser     bool  – ensure current user appears in list
+     onlySiteOwner                  bool  – include only site owners
+     =======================================================================
+                                                                                                                                                   
+     Examples
+     --------
+         # basic list
+         list_people()
+                                                                                                                                                   
+         # collaborators updated recently
+         list_people(userType="collaborator", updatedAfter="2025-10-01T00:00:00Z")
+                                                                                                                                                   
+         # paginated, newest first
+         list_people(orderMode="desc", pageSize=100, page=2)
+                                                                                                                                                   
+     Parameters
+     ----------
+     query:
+         Optional dict of query parameters.
+     **query_params:
+         Additional query parameters as keyword arguments.
+                                                                                                                                                   
+     Returns
+     -------
+     requests.Response
+         JSON body shaped like ``{"people": [...], "meta": {...}}``.
+     """
+     params = {**(query or {}), **query_params}
+     return _get("/people.json", params=_serialize_params(params))
 
 # --------------------------------------------------------------------------- #
 # People within a single project
