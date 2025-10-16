@@ -5,6 +5,7 @@ It creates a new task in the given task-list.
 from __future__ import annotations
 
 import logging
+import json
 from typing import Any, Dict
 
 from aider.api.teamwork_projects import create_task
@@ -120,4 +121,10 @@ class CreateTaskTool(BaseTool):
         except Exception as exc:  # noqa: BLE001
             raise ToolError(f"Teamwork API error: {exc}") from exc
 
-        return resp.text
+        # Teamwork may return 201 Created with an *empty* body.
+        # If so, return a concise JSON summary instead of an empty string.
+        if resp.text and resp.text.strip():
+            return resp.text
+        return json.dumps(
+            {"status": resp.status_code, "message": "Task created"}, ensure_ascii=False
+        )
