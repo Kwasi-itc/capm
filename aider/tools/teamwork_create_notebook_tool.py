@@ -9,7 +9,7 @@ POST /projects/{projectId}/notebooks.json through
 Required parameters
 -------------------
 • project_id (int) – target project ID  
-• payload     (object) – JSON body holding the *notebook* object
+• payload     (object) – dict containing a `notebook` object with at least `name` and `description` fields
 
 Optional keyword arguments become query parameters (getEmoji, include,
 fields[users], fields[tags], …).
@@ -33,11 +33,11 @@ class TeamworkCreateNotebookTool(BaseTool):
     description = (
         "Create a new notebook inside a Teamwork project by issuing "
         "POST /projects/{projectId}/notebooks.json. Provide the numeric `project_id` and a "
-        "`payload` dict that contains the *notebook* object exactly as required by Teamwork. "
-        "Additional keyword arguments are appended to the query string, allowing emoji parsing "
-        "(`getEmoji=false`), inclusion of related objects (`include=projects,tags`), or field "
-        "selection via `fields[notebooks]=id,name`. The raw JSON response is returned as a "
-        "UTF-8 string."
+        "`payload` dict whose `notebook` object MUST include at least a `name` and `description` "
+        "field as expected by Teamwork. Additional keyword arguments are appended to the query "
+        "string, allowing emoji parsing (`getEmoji=false`), inclusion of related objects "
+        "(`include=projects,tags`), or field selection via `fields[notebooks]=id,name`. The raw "
+        "JSON response is returned as a UTF-8 string."
     )
 
     parameters: Dict[str, Any] = {
@@ -49,7 +49,22 @@ class TeamworkCreateNotebookTool(BaseTool):
             },
             "payload": {
                 "type": "object",
-                "description": "JSON body with the *notebook* object to create",
+                "description": (
+                    "JSON body containing a `notebook` object that must include at least "
+                    "`name` and `description` fields, e.g. "
+                    "{'notebook': {'name': 'Sprint Retro', 'description': 'Notes…'}}"
+                ),
+                "properties": {
+                    "notebook": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "description": {"type": "string"},
+                        },
+                        "required": ["name", "description"],
+                    }
+                },
+                "required": ["notebook"],
             },
             "getEmoji": {"type": "boolean"},
             "include": {
