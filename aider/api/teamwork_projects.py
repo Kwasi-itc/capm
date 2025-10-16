@@ -63,6 +63,7 @@ __all__ = [
     "user_task_completion",
     "task_subtasks",
     "task_comments",
+    "comment_task",
     "notebook_comments",
     "file_comments",
     "notebook_versions",
@@ -865,6 +866,50 @@ def create_subtask(
         )
     """
     return _post(f"/tasks/{task_id}/subtasks.json", json=data, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Add comment to a task
+# --------------------------------------------------------------------------- #
+def comment_task(
+    task_id: int | str,
+    data: Dict[str, Any],
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    POST /tasks/{taskId}/comments.json – Add a **comment** to an existing task.
+
+    Parameters
+    ----------
+    task_id:
+        Numeric Teamwork task ID that will receive the new comment.
+    data:
+        Dict containing the JSON body.  Pass the *comment* object exactly as
+        documented by Teamwork, for example::
+
+            {
+                "comment": {
+                    "body": "Looks good to me!",
+                    "notify": [123, 456]
+                }
+            }
+
+    query / **query_params:
+        Optional query-string parameters such as getEmoji, include, fields[…].
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"comment": {...}}``.
+    """
+    params = {**(query or {}), **query_params}
+    return _post(
+        f"/tasks/{task_id}/comments.json",
+        json=data,
+        params=_serialize_params(params),
+    )
 
 
 # --------------------------------------------------------------------------- #

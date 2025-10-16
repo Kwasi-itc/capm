@@ -23,8 +23,7 @@ import json
 from typing import Any, Dict
 
 from aider.tools.base_tool import BaseTool, ToolError
-from aider.api import teamwork as tw_api
-from aider.api.teamwork_projects import _serialize_params
+from aider.api import teamwork_projects as tw_projects
 from aider.api import ApiError
 
 
@@ -80,8 +79,7 @@ class TeamworkCommentTaskTool(BaseTool):
 
     def run(self, task_id: int, payload: Dict[str, Any], **kwargs: Dict[str, Any]):  # noqa: D401
         try:
-            params = _serialize_params(kwargs)
-            resp = tw_api.post(f"/tasks/{task_id}/comments.json", json=payload, params=params)
+            resp = tw_projects.comment_task(task_id, payload, **kwargs)
             return json.dumps(resp.json(), ensure_ascii=False)
         except ApiError as api_exc:
             return json.dumps({"error": str(api_exc)}, ensure_ascii=False)
