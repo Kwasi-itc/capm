@@ -125,7 +125,8 @@ class BaseTool(ABC):
             logger.debug("Tool %s completed successfully", self.name)
             return result
         except Exception as exc:  # noqa: BLE001
-            logger.exception("Error while running %s", self.name)
+            # Log only a concise debug line so the end-user doesn't see a traceback.
+            logger.debug("Error while running %s: %s", self.name, exc)
             raise ToolError(f"Error while running {self.name}: {exc}") from exc
 
     # -------- concrete tool must implement -----------------------
