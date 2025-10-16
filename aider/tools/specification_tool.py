@@ -338,7 +338,10 @@ class SpecificationTool(BaseTool):
                     [
                         {
                             "role": "system",
-                            "content": reviewer_prompt.format(spec=draft),
+                            "content": (
+                                reviewer_prompt.format(spec=draft)
+                                + (f"\n\nOriginal context:\n{context}" if context else "")
+                            ),
                         }
                     ]
                 )
@@ -349,10 +352,13 @@ class SpecificationTool(BaseTool):
                         {
                             "role": "system",
                             "content": (
-                                "You are the original drafter. Improve the specification according "
-                                "to the reviewer comments below:\n\n---\n{review}\n---\n\n"
-                                "Current specification:\n{spec}"
-                            ).format(review=review, spec=draft),
+                                (
+                                    "You are the original drafter. Improve the specification according "
+                                    "to the reviewer comments below:\n\n---\n{review}\n---\n\n"
+                                    "Current specification:\n{spec}"
+                                ).format(review=review, spec=draft)
+                                + (f"\n\nOriginal context:\n{context}" if context else "")
+                            ),
                         }
                     ]
                 )
