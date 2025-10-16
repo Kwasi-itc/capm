@@ -15,6 +15,10 @@ Optional keyword arguments become query parameters (getEmoji, include,
 fields[users], fields[tags], …).
 
 The endpoint’s JSON response is returned **as a UTF-8 string**.
+
+LLM usage hint
+--------------
+Use this tool whenever the assistant is asked to add a *specification*, *specification document*, *project requirement*, *project requirement document*, or *technical architecture* to Teamwork.
 """
 from __future__ import annotations
 
