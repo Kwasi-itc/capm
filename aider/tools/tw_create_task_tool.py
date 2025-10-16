@@ -30,7 +30,12 @@ class CreateTaskTool(BaseTool):
         "• taskOptions (object) – additional task flags/options\n"
         "• workflows (object) – workflow placement information\n"
         "• card (object) – Kanban card metadata\n"
-        "• predecessors (array[object]) – predecessor task definitions"
+        "• predecessors (array[object]) – predecessor task definitions\n"
+        "• allocationId (integer) – ID of the allocation to assign\n"
+        "• assignees (object) – user/group IDs to assign to the task\n"
+        "• attachmentIds (array[integer]) – IDs of existing attachments to link\n"
+        "• changeFollowers (object) – entities (users/companies/teams) following task changes\n"
+        "• commentFollowers (object) – entities following task comments"
     )
     parameters: Dict[str, Any] = {
         "type": "object",
@@ -72,6 +77,27 @@ class CreateTaskTool(BaseTool):
                 "type": "array",
                 "items": {"type": "object"},
                 "description": "Predecessor relations for the new task.",
+            },
+            "allocationId": {
+                "type": "integer",
+                "description": "Allocation ID to associate with the task.",
+            },
+            "assignees": {
+                "type": "object",
+                "description": "UserGroups object specifying users/teams/companies assigned.",
+            },
+            "attachmentIds": {
+                "type": "array",
+                "items": {"type": "integer"},
+                "description": "IDs of existing attachments to link with the task.",
+            },
+            "changeFollowers": {
+                "type": "object",
+                "description": "UserGroups object of entities following task changes.",
+            },
+            "commentFollowers": {
+                "type": "object",
+                "description": "UserGroups object of entities following task comments.",
             },
         },
         "required": ["tasklistId", "task"],
