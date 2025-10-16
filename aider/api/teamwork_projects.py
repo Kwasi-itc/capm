@@ -656,7 +656,7 @@ def list_tasks(query: Optional[Dict[str, Any]] = None, **query_params):
 # --------------------------------------------------------------------------- #
 def list_people(query: Optional[Dict[str, Any]] = None, **query_params):
 
-    ...
+    params = {**(query or {}), **query_params}
     return _get("/people.json", params=_serialize_params(params))
 
 
