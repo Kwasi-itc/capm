@@ -9,7 +9,7 @@ POST /projects/{projectId}/notebooks.json through
 Required parameters
 -------------------
 • project_id (int) – target project ID  
-• payload     (object) – dict containing a `notebook` object with at least `name` and `description` fields
+• payload     (object) – dict containing a `notebook` object with at least `name` and `description` fields. It may additionally include `categoryId`, `contents`, `isFullWidth`, `isPrivate`, `locked`, `newVersion`, and `notify`.
 
 Optional keyword arguments become query parameters (getEmoji, include,
 fields[users], fields[tags], …).
@@ -33,7 +33,7 @@ class TeamworkCreateNotebookTool(BaseTool):
     description = (
         "Create a new notebook inside a Teamwork project by issuing "
         "POST /projects/{projectId}/notebooks.json. Provide the numeric `project_id` and a "
-        "`payload` dict whose `notebook` object MUST include at least a `name` and `description` "
+        "`payload` dict whose `notebook` object MUST include at least a `name` and `description` field, and may optionally include `categoryId`, `contents`, `isFullWidth`, `isPrivate`, `locked`, `newVersion`, and `notify` "
         "field as expected by Teamwork. Additional keyword arguments are appended to the query "
         "string, allowing emoji parsing (`getEmoji=false`), inclusion of related objects "
         "(`include=projects,tags`), or field selection via `fields[notebooks]=id,name`. The raw "
@@ -51,8 +51,10 @@ class TeamworkCreateNotebookTool(BaseTool):
                 "type": "object",
                 "description": (
                     "JSON body containing a `notebook` object that must include at least "
-                    "`name` and `description` fields, e.g. "
-                    "{'notebook': {'name': 'Sprint Retro', 'description': 'Notes…'}}"
+                    "`name` and `description` fields, and may also include `categoryId`, "
+                    "`contents`, `isFullWidth`, `isPrivate`, `locked`, `newVersion`, and `notify`. "
+                    "Example: {'notebook': {'name': 'Sprint Retro', 'description': 'Notes…', "
+                    "'categoryId': 1234}}"
                 ),
                 "properties": {
                     "notebook": {
@@ -60,6 +62,13 @@ class TeamworkCreateNotebookTool(BaseTool):
                         "properties": {
                             "name": {"type": "string"},
                             "description": {"type": "string"},
+                            "categoryId": {"type": "integer"},
+                            "contents": {"type": "string"},
+                            "isFullWidth": {"type": "boolean"},
+                            "isPrivate": {"type": "boolean"},
+                            "locked": {"type": "boolean"},
+                            "newVersion": {"type": "boolean"},
+                            "notify": {"type": "object"},
                         },
                         "required": ["name", "description"],
                     }
