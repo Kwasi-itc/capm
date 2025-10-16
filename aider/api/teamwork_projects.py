@@ -54,6 +54,7 @@ __all__ = [
     "list_tasklists",
     "list_people",
     "project_people",
+    "add_project_people",
     "list_tasks",
     "get_task",
     "tasklist_tasks",
@@ -706,6 +707,48 @@ def list_people(query: Optional[Dict[str, Any]] = None, **query_params):
 # --------------------------------------------------------------------------- #
 # People within a single project
 # --------------------------------------------------------------------------- #
+def add_project_people(
+    project_id: int | str,
+    data: Dict[str, Any],
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    **query_params,
+):
+    """
+    PUT /projects/{projectId}/people.json – **Add people to a project**.
+
+    Send a JSON body with either/both of:
+
+    • ``userIds`` – array[int] of user IDs to add  
+    • ``checkTeamIds`` – array[int] of team IDs to expand into user IDs  
+      (Teamwork will resolve team membership and add the users).
+
+    Example
+    -------
+        add_project_people(
+            12345,
+            {
+                "userIds": [111, 222, 333],
+                "checkTeamIds": [10]
+            }
+        )
+
+    Optional query-string parameters (include, fields[…], etc.) can be passed via
+    *query* or **query_params.
+
+    Returns
+    -------
+    requests.Response
+        JSON payload shaped like ``{"people": [...], "meta": {...}}`` after update.
+    """
+    params = {**(query or {}), **query_params}
+    return _put(
+        f"/projects/{project_id}/people.json",
+        json=data,
+        params=_serialize_params(params),
+    )
+
+
 def project_people(
     project_id: int | str,
     *,
