@@ -271,6 +271,7 @@ class SpecificationTool(BaseTool):
     def run(  # noqa: D401
         self,
         topic: str,
+        context: str | None = None,
         spec_type: str = "TechnicalArchitecture",
         iterations: int = 3,
         model: str | None = None,
@@ -321,7 +322,10 @@ class SpecificationTool(BaseTool):
                     [
                         {
                             "role": "system",
-                            "content": drafter_prompt.format(spec_type=spec_type, topic=topic),
+                            "content": (
+                                drafter_prompt.format(spec_type=spec_type, topic=topic)
+                                + (f"\n\nAdditional context:\n{context}" if context else "")
+                            ),
                         }
                     ]
                 )
