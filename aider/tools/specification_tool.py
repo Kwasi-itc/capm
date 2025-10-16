@@ -81,6 +81,10 @@ class SpecificationTool(BaseTool):
                 "type": "string",
                 "description": "Short description of what the specification should cover.",
             },
+            "context": {
+                "type": "string",
+                "description": "Additional background or constraints to inform the specification.",
+            },
             "spec_type": {
                 "type": "string",
                 "description": (
