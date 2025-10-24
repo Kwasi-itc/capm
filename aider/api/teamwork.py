@@ -19,7 +19,7 @@ from typing import Optional
 
 from . import ApiClient, ApiError
 
-__all__ = ["TeamworkClient", "get", "post", "put", "patch", "delete", "me"]
+__all__ = ["TeamworkClient", "get", "post", "put", "patch", "delete"]
 
 
 class TeamworkClient(ApiClient):
@@ -64,17 +64,6 @@ class TeamworkClient(ApiClient):
         # username = api_key, password = "x" (ignored by Teamwork)
         self.session.auth = (api_key, "x")
 
-    def me(self, **kwargs):
-        """
-        Get details of the currently authenticated Teamwork user.
-
-        Returns
-        -------
-        requests.Response
-            Response object for GET /me.json
-        """
-        return self.get("/me.json", **kwargs)
-
 
 # --------------------------------------------------------------------------- #
 # Module-level convenience helpers
@@ -109,8 +98,3 @@ def delete(path: str, **kwargs):
     return _tw().delete(path, **kwargs)
 
 
-def me(**kwargs):
-    """
-    Convenience wrapper around TeamworkClient.me().
-    """
-    return _tw().me(**kwargs)
