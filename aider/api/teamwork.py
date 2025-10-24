@@ -19,7 +19,7 @@ from typing import Optional
 
 from . import ApiClient, ApiError
 
-__all__ = ["TeamworkClient", "get", "post", "put", "patch", "delete"]
+__all__ = ["TeamworkClient", "get", "post", "put", "patch", "delete", "me"]
 
 
 class TeamworkClient(ApiClient):
@@ -64,6 +64,45 @@ class TeamworkClient(ApiClient):
         # username = api_key, password = "x" (ignored by Teamwork)
         self.session.auth = (api_key, "x")
 
+    # --------------------------------------------------------------------- #
+    # Public helpers
+    # --------------------------------------------------------------------- #
+    def me(
+        self,
+        *,
+        getPreferences: bool = False,
+        fullProfile: bool = False,
+        getDefaultFilters: bool = False,
+        sharedFilter: bool = False,
+        getAccounts: bool = False,
+        includeAuth: bool = False,
+        **kwargs,
+    ):
+        """
+        Fetch details of the currently authenticated Teamwork user.
+
+        Parameters correspond to the optional query-string flags documented by
+        the Teamwork API.  Pass ``True`` to include a flag, leave ``False`` to
+        omit it.
+
+        Returns
+        -------
+        requests.Response
+            Response object for GET /me.json
+        """
+        params = {
+            "getPreferences": getPreferences,
+            "fullProfile": fullProfile,
+            "getDefaultFilters": getDefaultFilters,
+            "sharedFilter": sharedFilter,
+            "getAccounts": getAccounts,
+            "includeAuth": includeAuth,
+        }
+        # Filter out params left at the default ``False`` value so the query
+        # string stays short.
+        params = {k: "true" for k, v in params.items() if v}
+        return self.get("/me.json", params=params, **kwargs)
+
 
 # --------------------------------------------------------------------------- #
 # Module-level convenience helpers
@@ -96,5 +135,13 @@ def patch(path: str, **kwargs):
 
 def delete(path: str, **kwargs):
     return _tw().delete(path, **kwargs)
+
+
+def me(**kwargs):
+    """
+    Convenience wrapper around TeamworkClient.me().
+    Mirrors the same keyword arguments.
+    """
+    return _tw().me(**kwargs)
 
 
