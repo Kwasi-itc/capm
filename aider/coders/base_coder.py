@@ -1272,10 +1272,17 @@ class Coder:
         # Teamwork helper guidance
         final_reminders.append(
             "Teamwork tools available:\n"
+            "• TeamworkGetCurrentUserTool – fetch the authenticated user profile\n"
             "• TeamworkProjectDetailTool – get project details\n"
             "• TeamworkNotebookCommentsTool – list notebook comments\n"
             "• TeamworkUpdateProjectTool – update an existing project\n"
-            "Use these tools to query or modify Teamwork.com data. "
+            "\n"
+            "When the user requests tasks *assigned to themselves* (eg \"my tasks\", "
+            "\"tasks assigned to me\"), FIRST call TeamworkGetCurrentUserTool to obtain the "
+            "current user's ID. Then call the tasks endpoint with that ID "
+            "(for example assigneeIds=[<id>]). Never pass literal filters like \"my\" or "
+            "\"mine\" in query parameters.\n"
+            "\n"
             "Return JSON responses or concise summaries as appropriate."
         )
 
