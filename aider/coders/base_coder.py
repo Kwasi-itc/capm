@@ -1237,6 +1237,17 @@ class Coder:
         return platform_text
 
     def fmt_system_prompt(self, prompt):
+        # Inject a global identity header once per system prompt.
+        identity_header = (
+            "You are an agentic coding assistant running in a terminal-style CLI.\n"
+            "Pair-program with the USER and keep working until the user's goal is fully "
+            "resolved or you are explicitly blocked. Be precise, safe, and helpful.\n\n"
+            "Identity & tools\n"
+            "You operate on the current workspace and may call the following tools:\n"
+        )
+        if identity_header.splitlines()[0] not in prompt:
+            prompt = identity_header + prompt
+
         final_reminders = []
         if self.main_model.lazy:
             final_reminders.append(self.gpt_prompts.lazy_prompt)
