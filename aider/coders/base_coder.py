@@ -1271,12 +1271,12 @@ class Coder:
 
         # Teamwork helper guidance
         final_reminders.append(
-            "Teamwork API helpers are available:\n"
-            "• teamwork.get / post / put / patch / delete(path, **kwargs) – perform HTTP requests\n"
-            "• teamwork.me(**kwargs) – fetch info about the authenticated user\n"
-            "Use them when the user asks to query or update Teamwork.com data. "
-            "Return JSON responses or concise summaries as appropriate. "
-            "Never run shell commands for these API calls."
+            "Teamwork tools available:\n"
+            "• TeamworkProjectDetailTool – get project details\n"
+            "• TeamworkNotebookCommentsTool – list notebook comments\n"
+            "• TeamworkUpdateProjectTool – update an existing project\n"
+            "Use these tools to query or modify Teamwork.com data. "
+            "Return JSON responses or concise summaries as appropriate."
         )
 
         # Guidance for tool invocation: avoid redundant repeat calls
