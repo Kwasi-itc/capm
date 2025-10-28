@@ -124,6 +124,12 @@ class BaseTool(ABC):
                 result = self.run(**args)
             logger.debug("Tool %s completed successfully", self.name)
             return result
+        except ToolError as exc:
+            # Surface *expected* tool failures (eg validation issues) as a
+            # normal textual result so the conversation can continue instead
+            # of aborting the execution loop.
+            logger.debug("Tool %s reported ToolError: %s", self.name, exc)
+            return f"Tool error: {exc}"
         except Exception as exc:  # noqa: BLE001
             # Log only a concise debug line so the end-user doesn't see a traceback.
             logger.debug("Error while running %s: %s", self.name, exc)
