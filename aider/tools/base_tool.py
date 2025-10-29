@@ -104,6 +104,16 @@ class BaseTool(ABC):
             "parameters": cls.parameters,
         }
 
+    # -------- runtime behaviour tweaks (sub-classes may override) ----------
+    def wants_spinner(self) -> bool:
+        """
+        Return True if a waiting spinner should be displayed while the tool
+        executes.  Individual tools can override this to suppress the spinner
+        when they need full, unbuffered control of stdin/stdout (eg. BashTool
+        which may prompt the user for input).
+        """
+        return True
+
     # -------- interface used after model returns tool call -------
     def handle_call(self, args_json: str | None) -> str:
         """
@@ -120,7 +130,10 @@ class BaseTool(ABC):
             raise ToolError(f"Invalid arguments for {self.name}: {exc.message}") from exc
 
         try:
-            with WaitingSpinner(f"Running {self.name}"):
+            if self.wants_spinner():
+                with WaitingSpinner(f"Running {self.name}"):
+                    result = self.run(**args)
+            else:
                 result = self.run(**args)
             logger.debug("Tool %s completed successfully", self.name)
             return result

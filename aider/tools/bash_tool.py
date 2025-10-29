@@ -114,6 +114,11 @@ class BashTool(BaseTool):
         super().__init__()
         self._session_cwd: Path | None = None
 
+    # ---------------- spinner control -------------------------------------
+    def wants_spinner(self) -> bool:
+        """Disable waiting spinner – BashTool streams its own live output."""
+        return False
+
 
     # ---------------- main entry point ------------------------------------
     def run(
