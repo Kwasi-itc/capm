@@ -2,7 +2,6 @@ import os
 import platform
 import subprocess
 import sys
-import signal
 from io import BytesIO
 
 import pexpect
@@ -74,24 +73,14 @@ def run_cmd_subprocess(command, verbose=False, cwd=None, encoding=sys.stdout.enc
         )
 
         output = []
-        try:
-            while True:
-                chunk = process.stdout.read(1)
-                if not chunk:
-                    break
-                print(chunk, end="", flush=True)  # Print the chunk in real-time
-                output.append(chunk)  # Store the chunk for later use
-        except KeyboardInterrupt:
-            # Forward Ctrl+C to the child process so it can terminate cleanly
-            try:
-                if platform.system() == "Windows":
-                    process.terminate()
-                else:
-                    process.send_signal(signal.SIGINT)
-            except Exception:
-                pass
-        finally:
-            process.wait()
+        while True:
+            chunk = process.stdout.read(1)
+            if not chunk:
+                break
+            print(chunk, end="", flush=True)  # Print the chunk in real-time
+            output.append(chunk)  # Store the chunk for later use
+
+        process.wait()
         return process.returncode, "".join(output)
     except Exception as e:
         return 1, str(e)
@@ -131,18 +120,11 @@ def run_cmd_pexpect(command, verbose=False, cwd=None):
                 print("Running pexpect.spawn without shell.")
             child = pexpect.spawn(command, encoding="utf-8", cwd=cwd)
 
-        try:
-            # Transfer control to the user, capturing output
-            child.interact(output_filter=output_callback)
-        except KeyboardInterrupt:
-            # Ensure the child process receives the interrupt signal
-            try:
-                child.sendcontrol("c")
-            except Exception:
-                pass
-        finally:
-            # Wait for the command to finish and get the exit status
-            child.close(force=True)
+        # Transfer control to the user, capturing output
+        child.interact(output_filter=output_callback)
+
+        # Wait for the command to finish and get the exit status
+        child.close()
         return child.exitstatus, output.getvalue().decode("utf-8", errors="replace")
 
     except (pexpect.ExceptionPexpect, TypeError, ValueError) as e:
