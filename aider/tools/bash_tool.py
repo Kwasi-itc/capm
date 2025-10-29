@@ -238,11 +238,11 @@ class BashTool(BaseTool):
             Path(tmp_path).unlink(missing_ok=True)
 
         return textwrap.dedent(
-            f\"\"\"\
+            f"""\
             {header}
             ── output ──
             {out}
-            \"\"\"
+            """
         ).rstrip()
         try:
             # --- live streaming -------------------------------------------------
