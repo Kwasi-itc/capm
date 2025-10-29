@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .base_tool import BaseTool, ToolError
+from aider.run_cmd import run_cmd
 
 # --------------- policy constants ------------------------------------------
 MAX_OUTPUT_CHARS = 30_000
@@ -221,6 +222,28 @@ class BashTool(BaseTool):
 
         # ----- execute -----
         start = time.time()
+
+        # Run the command through the generic helper which provides an
+        # interactive session on POSIX (pexpect) or a standard subprocess
+        # runner on Windows.  We capture the full output and return it once the
+        # command finishes instead of manually streaming byte-by-byte.
+        full_cmd = " ".join(shlex.quote(part) for part in cmd_list) if isinstance(cmd_list, list) else cmd_list
+        exit_code, output = run_cmd(full_cmd, verbose=True, cwd=str(workdir))
+        elapsed_ms = int((time.time() - start) * 1000)
+
+        out, total_lines = _truncate(output)
+        header = f"exit={exit_code}  lines={total_lines}  elapsed={elapsed_ms}ms"
+
+        if tmp_path:
+            Path(tmp_path).unlink(missing_ok=True)
+
+        return textwrap.dedent(
+            f\"\"\"\
+            {header}
+            ── output ──
+            {out}
+            \"\"\"
+        ).rstrip()
         try:
             # --- live streaming -------------------------------------------------
             #
