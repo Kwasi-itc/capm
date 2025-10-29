@@ -20,6 +20,7 @@ import time
 import shutil
 import platform
 import sys
+import signal
 import tempfile
 from pathlib import Path
 from typing import Any, Dict
@@ -241,6 +242,7 @@ class BashTool(BaseTool):
             )
 
             deadline = start + timeout_s
+            interrupted = False
             try:
                 for line in proc.stdout:
                     # Stop the spinner on first real output
@@ -255,9 +257,22 @@ class BashTool(BaseTool):
                     if time.time() > deadline:
                         proc.kill()
                         raise subprocess.TimeoutExpired(cmd_list, timeout_s)
-                # ensure the process has exited (raises on timeout)
-                proc.wait(timeout=max(0, deadline - time.time()))
+            except KeyboardInterrupt:
+                # Forward Ctrl+C to the child process and mark as interrupted
+                interrupted = True
+                try:
+                    if platform.system() == "Windows":
+                        proc.terminate()
+                    else:
+                        proc.send_signal(signal.SIGINT)
+                except Exception:
+                    pass
             finally:
+                # ensure the process has exited (raises on timeout)
+                try:
+                    proc.wait(timeout=max(0, deadline - time.time()))
+                except subprocess.TimeoutExpired:
+                    proc.kill()
                 if proc.stdout:
                     proc.stdout.close()
 
@@ -275,7 +290,8 @@ class BashTool(BaseTool):
             elapsed_ms = int((time.time() - start) * 1000)
             combined = "".join(output_lines)
             out, total_lines = _truncate(combined)
-            header = f"exit={proc.returncode}  lines={total_lines}  elapsed={elapsed_ms}ms"
+            status = "interrupted" if interrupted else f"exit={proc.returncode}"
+            header = f"{status}  lines={total_lines}  elapsed={elapsed_ms}ms"
 
             # On non-zero exit we still return the captured output instead of
             # raising an error. The LLM can inspect the result and decide what
