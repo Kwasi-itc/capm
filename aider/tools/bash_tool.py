@@ -224,6 +224,8 @@ class BashTool(BaseTool):
             # to the LLM once the command finishes or times-out.
             #
             output_lines: list[str] = []
+            prev_line = ""
+            current_line_chars: list[str] = []
             proc = subprocess.Popen(
                 cmd_list,
                 cwd=workdir,
@@ -240,6 +242,14 @@ class BashTool(BaseTool):
                 while True:
                     chunk = proc.stdout.read(1)  # read byte-by-byte for immediate feedback
                     if not chunk:
+                        # Flush any trailing partial line
+                        if current_line_chars:
+                            line_str = "".join(current_line_chars)
+                            if line_str != prev_line:
+                                sys.stdout.write(line_str)
+                                sys.stdout.flush()
+                                output_lines.append(line_str)
+                            current_line_chars.clear()
                         break
 
                     # Stop the spinner on first real output
@@ -247,9 +257,17 @@ class BashTool(BaseTool):
                         stop_spinner.set()
                         spinner_thread.join()
 
-                    sys.stdout.write(chunk)
-                    sys.stdout.flush()
-                    output_lines.append(chunk)
+                    current_line_chars.append(chunk)
+
+                    # When we reach end-of-line decide whether to echo/capture it
+                    if chunk == "\n":
+                        line_str = "".join(current_line_chars)
+                        if line_str != prev_line:
+                            sys.stdout.write(line_str)
+                            sys.stdout.flush()
+                            output_lines.append(line_str)
+                        prev_line = line_str
+                        current_line_chars.clear()
 
                     if time.time() > deadline:
                         proc.kill()
