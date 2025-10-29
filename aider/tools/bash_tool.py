@@ -244,15 +244,19 @@ class BashTool(BaseTool):
             deadline = start + timeout_s
             interrupted = False
             try:
-                for line in proc.stdout:
+                while True:
+                    chunk = proc.stdout.read(1)  # read byte-by-byte for immediate feedback
+                    if not chunk:
+                        break
+
                     # Stop the spinner on first real output
-                    if line and stop_spinner and not stop_spinner.is_set():
+                    if stop_spinner and not stop_spinner.is_set():
                         stop_spinner.set()
                         spinner_thread.join()
 
-                    sys.stdout.write(line)
+                    sys.stdout.write(chunk)
                     sys.stdout.flush()
-                    output_lines.append(line)
+                    output_lines.append(chunk)
 
                     if time.time() > deadline:
                         proc.kill()
