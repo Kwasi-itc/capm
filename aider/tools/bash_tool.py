@@ -1,6 +1,14 @@
 """
 BashTool – execute ONE shell command inside Bash and return its output.
 
+NOTE – live streaming  
+─────────────────────  
+The earlier implementation contained a large “manual” byte-loop to stream
+stdout/stderr.  This is now redundant: we delegate the entire task to
+`aider.run_cmd.run_cmd()`, which prints the child process output in real time
+on both POSIX (via *pexpect*) and Windows (via *subprocess*).  The legacy
+streaming code has therefore been removed to keep the tool lean.
+
 Safety & limits
 ---------------
 • BANNED_COMMANDS are rejected outright (security / policy).
