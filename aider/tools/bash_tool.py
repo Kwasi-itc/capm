@@ -137,23 +137,11 @@ class BashTool(BaseTool):
         timeout_s = timeout_ms / 1000.0
 
         # -------- optional spinner/progress indicator ---------
+        # Disable the animated spinner so the subprocess can freely interact
+        # with the terminal (eg. when it prompts the user for input). The tool
+        # now hands over full control until the command finishes.
         stop_spinner: threading.Event | None = None
         spinner_thread: threading.Thread | None = None
-        if progress and sys.stdout.isatty():
-            stop_spinner = threading.Event()
-
-            def _spin(ev: threading.Event) -> None:
-                for ch in itertools.cycle("|/-\\"):
-                    if ev.is_set():
-                        break
-                    sys.stdout.write(f"\rRunning… {ch}")
-                    sys.stdout.flush()
-                    time.sleep(0.1)
-                sys.stdout.write("\r" + " " * 20 + "\r")
-                sys.stdout.flush()
-
-            spinner_thread = threading.Thread(target=_spin, args=(stop_spinner,), daemon=True)
-            spinner_thread.start()
 
         # track any temporary file created for long inline python
         tmp_path: str | None = None
