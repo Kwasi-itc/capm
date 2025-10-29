@@ -14,6 +14,7 @@ from __future__ import annotations
 import shlex
 import subprocess
 import itertools
+import re
 import threading
 import textwrap
 import time
@@ -66,6 +67,11 @@ def _truncate(text: str) -> tuple[str, int]:
     ellipsis = f"\n\n... [{len(middle_lines)} lines truncated] ...\n\n"
     return (head + ellipsis + tail).rstrip(), len(lines)
 
+
+ANSI_RE = re.compile(r"\x1b\\[[0-9;]*[A-Za-z]")
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences so logical line comparisons ignore styling."""
+    return ANSI_RE.sub("", text)
 
 def _first_token(cmd: str) -> str:
     try:
@@ -224,7 +230,7 @@ class BashTool(BaseTool):
             # to the LLM once the command finishes or times-out.
             #
             output_lines: list[str] = []
-            prev_line = ""
+            prev_line_clean = ""
             current_line_chars: list[str] = []
             proc = subprocess.Popen(
                 cmd_list,
@@ -245,7 +251,8 @@ class BashTool(BaseTool):
                         # Flush any trailing partial line
                         if current_line_chars:
                             line_str = "".join(current_line_chars)
-                            if line_str != prev_line:
+                            line_clean = _strip_ansi(line_str)
+                            if line_clean != prev_line_clean:
                                 sys.stdout.write(line_str)
                                 sys.stdout.flush()
                                 output_lines.append(line_str)
@@ -262,11 +269,12 @@ class BashTool(BaseTool):
                     # When we reach end-of-line decide whether to echo/capture it
                     if chunk == "\n":
                         line_str = "".join(current_line_chars)
-                        if line_str != prev_line:
+                        line_clean = _strip_ansi(line_str)
+                        if line_clean != prev_line_clean:
                             sys.stdout.write(line_str)
                             sys.stdout.flush()
                             output_lines.append(line_str)
-                        prev_line = line_str
+                        prev_line_clean = line_clean
                         current_line_chars.clear()
 
                     if time.time() > deadline:
