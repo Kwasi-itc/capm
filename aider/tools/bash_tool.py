@@ -236,7 +236,8 @@ class BashTool(BaseTool):
         # runner on Windows.  We capture the full output and return it once the
         # command finishes instead of manually streaming byte-by-byte.
         full_cmd = " ".join(shlex.quote(part) for part in cmd_list) if isinstance(cmd_list, list) else cmd_list
-        exit_code, output = run_cmd(full_cmd, verbose=True, cwd=str(workdir))
+        # suppress internal debug lines from run_cmd to avoid duplicate output
+        exit_code, output = run_cmd(full_cmd, verbose=False, cwd=str(workdir))
         elapsed_ms = int((time.time() - start) * 1000)
 
         out, total_lines = _truncate(output)
