@@ -1063,6 +1063,7 @@ class Model(ModelSettings):
         if "deepseek-reasoner" in self.name:
             messages = ensure_alternating_roles(messages)
         retry_delay = 0.125
+        last_err_msg = None
 
         if self.verbose:
             dump(messages)
@@ -1085,9 +1086,13 @@ class Model(ModelSettings):
 
             except litellm_ex.exceptions_tuple() as err:
                 ex_info = litellm_ex.get_ex_info(err)
-                print(str(err))
-                if ex_info.description:
+                err_msg = str(err)
+                if err_msg != last_err_msg:
+                    print(err_msg)
+                    last_err_msg = err_msg
+                if ex_info.description and ex_info.description != last_err_msg:
                     print(ex_info.description)
+                    last_err_msg = ex_info.description
                 should_retry = ex_info.retry
                 if should_retry:
                     retry_delay *= 2
