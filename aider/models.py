@@ -988,11 +988,14 @@ class Model(ModelSettings):
                 else:
                     temperature = float(self.use_temperature)
 
-            # gpt-5+ models do not accept temperature = 0
-            if self._requires_nonzero_temperature() and temperature == 0:
-                temperature = 1
-
-            kwargs["temperature"] = temperature
+            # GPT-5 and newer models reject an explicit temperature=0.
+            # If the caller (or default) requests 0 we simply omit the
+            # temperature parameter so the provider uses its own default (1).
+            if self._requires_nonzero_temperature():
+                if temperature != 0:
+                    kwargs["temperature"] = temperature
+            else:
+                kwargs["temperature"] = temperature
 
         if functions:
             # Advertise all available tools and allow the model to decide which
