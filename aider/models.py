@@ -7,6 +7,7 @@ import os
 import platform
 import sys
 import time
+import re
 from dataclasses import dataclass, fields
 from datetime import datetime
 from pathlib import Path
@@ -908,6 +909,15 @@ class Model(ModelSettings):
     def is_ollama(self):
         return self.name.startswith("ollama/") or self.name.startswith("ollama_chat/")
 
+    def _requires_nonzero_temperature(self):
+        """
+        OpenAI’s newer chat models (gpt-5 and above) reject a temperature
+        setting of 0.  When this returns True we must avoid sending
+        temperature = 0 and instead use the default value (1) or omit it.
+        """
+        m = re.match(r"gpt-(\d+)", self.name)
+        return bool(m and int(m.group(1)) >= 5)
+
     def github_copilot_token_to_open_ai_key(self, extra_headers):
         # check to see if there's an openai api key
         # If so, check to see if it's expire
@@ -977,6 +987,10 @@ class Model(ModelSettings):
                     temperature = 0
                 else:
                     temperature = float(self.use_temperature)
+
+            # gpt-5+ models do not accept temperature = 0
+            if self._requires_nonzero_temperature() and temperature == 0:
+                temperature = 1
 
             kwargs["temperature"] = temperature
 
