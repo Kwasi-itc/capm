@@ -54,6 +54,9 @@ gpt-4-1106-vision-preview
 gpt-4o-mini
 gpt-4o-mini-2024-07-18
 gpt-5
+gpt-5.4
+gpt-5.4-mini
+gpt-5.4-nano
 gpt-3.5-turbo
 gpt-3.5-turbo-0301
 gpt-3.5-turbo-0613
@@ -91,6 +94,9 @@ MODEL_ALIASES = {
     "4o": "gpt-4o",
     "4-turbo": "gpt-4-1106-preview",
     "5": "gpt-5",
+    "5.4": "gpt-5.4",
+    "5.4-mini": "gpt-5.4-mini",
+    "5.4-nano": "gpt-5.4-nano",
     "35turbo": "gpt-3.5-turbo",
     "35-turbo": "gpt-3.5-turbo",
     "3": "gpt-3.5-turbo",
@@ -231,6 +237,10 @@ class ModelInfoManager:
         return dict()
 
     def get_model_info(self, model):
+        local_info = self.local_model_metadata.get(model)
+        if local_info:
+            return local_info
+
         cached_info = self.get_model_from_cached_json_db(model)
 
         litellm_info = None

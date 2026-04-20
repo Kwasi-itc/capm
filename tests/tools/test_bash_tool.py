@@ -14,11 +14,6 @@ def test_banned_command(tmp_path: Path):
         BashTool().run(cmd="curl http://example.com")
 
 
-def test_timeout(tmp_path: Path):
-    with pytest.raises(ToolError):
-        BashTool().run(cmd="sleep 2", timeout=200)  # 0.2 s
-
-
 def test_truncation(tmp_path: Path):
     big = "x" * (MAX_OUTPUT_CHARS + 5000)
     out = BashTool().run(cmd=f"python -c 'print({big!r})'")

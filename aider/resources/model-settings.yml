@@ -1143,6 +1143,78 @@
   reminder: sys
   examples_as_sys_msg: false
 
+- name: gpt-5.4
+  streaming: false
+  edit_format: diff
+  weak_model_name: gpt-5.4-mini
+  use_repo_map: true
+  send_undo_reply: true
+  use_temperature: false
+  editor_model_name: gpt-5.4-mini
+  editor_edit_format: editor-diff
+  system_prompt_prefix: "Formatting re-enabled. "
+  accepts_settings: ["reasoning_effort"]
+  examples_as_sys_msg: true
+
+- name: openai/gpt-5.4
+  streaming: false
+  edit_format: diff
+  weak_model_name: openai/gpt-5.4-mini
+  use_repo_map: true
+  send_undo_reply: true
+  use_temperature: false
+  editor_model_name: openai/gpt-5.4-mini
+  editor_edit_format: editor-diff
+  system_prompt_prefix: "Formatting re-enabled. "
+  accepts_settings: ["reasoning_effort"]
+  examples_as_sys_msg: true
+
+- name: gpt-5.4-mini
+  streaming: false
+  edit_format: diff
+  weak_model_name: gpt-5.4-nano
+  use_repo_map: true
+  send_undo_reply: true
+  use_temperature: false
+  editor_model_name: gpt-5.4-mini
+  editor_edit_format: editor-diff
+  system_prompt_prefix: "Formatting re-enabled. "
+  accepts_settings: ["reasoning_effort"]
+  examples_as_sys_msg: true
+
+- name: openai/gpt-5.4-mini
+  streaming: false
+  edit_format: diff
+  weak_model_name: openai/gpt-5.4-nano
+  use_repo_map: true
+  send_undo_reply: true
+  use_temperature: false
+  editor_model_name: openai/gpt-5.4-mini
+  editor_edit_format: editor-diff
+  system_prompt_prefix: "Formatting re-enabled. "
+  accepts_settings: ["reasoning_effort"]
+  examples_as_sys_msg: true
+
+- name: gpt-5.4-nano
+  streaming: false
+  edit_format: diff
+  weak_model_name: gpt-5.4-nano
+  use_repo_map: true
+  use_temperature: false
+  system_prompt_prefix: "Formatting re-enabled. "
+  accepts_settings: ["reasoning_effort"]
+  examples_as_sys_msg: true
+
+- name: openai/gpt-5.4-nano
+  streaming: false
+  edit_format: diff
+  weak_model_name: openai/gpt-5.4-nano
+  use_repo_map: true
+  use_temperature: false
+  system_prompt_prefix: "Formatting re-enabled. "
+  accepts_settings: ["reasoning_effort"]
+  examples_as_sys_msg: true
+
 - name: o3
   streaming: false
   edit_format: diff

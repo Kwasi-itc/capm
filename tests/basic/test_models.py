@@ -5,6 +5,8 @@ from aider.models import (
     ANTHROPIC_BETA_HEADER,
     Model,
     ModelInfoManager,
+    model_info_manager,
+    register_litellm_models,
     register_models,
     sanity_check_model,
     sanity_check_models,
@@ -17,6 +19,7 @@ class TestModels(unittest.TestCase):
         from aider.models import MODEL_SETTINGS
 
         self._original_settings = MODEL_SETTINGS.copy()
+        self._original_metadata = model_info_manager.local_model_metadata.copy()
 
     def tearDown(self):
         """Restore original MODEL_SETTINGS after each test"""
@@ -24,6 +27,8 @@ class TestModels(unittest.TestCase):
 
         MODEL_SETTINGS.clear()
         MODEL_SETTINGS.extend(self._original_settings)
+        model_info_manager.local_model_metadata.clear()
+        model_info_manager.local_model_metadata.update(self._original_metadata)
 
     def test_get_model_info_nonexistent(self):
         manager = ModelInfoManager()
@@ -128,6 +133,15 @@ class TestModels(unittest.TestCase):
         model = Model("4o")
         self.assertEqual(model.name, "gpt-4o")
 
+        model = Model("5.4")
+        self.assertEqual(model.name, "gpt-5.4")
+
+        model = Model("5.4-mini")
+        self.assertEqual(model.name, "gpt-5.4-mini")
+
+        model = Model("5.4-nano")
+        self.assertEqual(model.name, "gpt-5.4-nano")
+
         model = Model("35turbo")
         self.assertEqual(model.name, "gpt-3.5-turbo")
 
@@ -149,6 +163,28 @@ class TestModels(unittest.TestCase):
         # Test non-alias passes through unchanged
         model = Model("gpt-4")
         self.assertEqual(model.name, "gpt-4")
+
+    def test_gpt_5_4_settings(self):
+        register_litellm_models(["aider/resources/model-metadata.json"])
+
+        model = Model("gpt-5.4")
+        self.assertEqual(model.edit_format, "diff")
+        self.assertEqual(model.weak_model_name, "gpt-5.4-mini")
+        self.assertEqual(model.editor_model_name, "gpt-5.4-mini")
+        self.assertTrue(model.use_repo_map)
+        self.assertFalse(model.use_temperature)
+        self.assertFalse(model.streaming)
+        self.assertIn("reasoning_effort", model.accepts_settings)
+        self.assertEqual(model.info["max_input_tokens"], 1048576)
+        self.assertEqual(model.info["max_output_tokens"], 128000)
+
+        mini = Model("gpt-5.4-mini")
+        self.assertEqual(mini.weak_model_name, "gpt-5.4-nano")
+        self.assertEqual(mini.info["max_input_tokens"], 400000)
+
+        nano = Model("gpt-5.4-nano")
+        self.assertEqual(nano.weak_model_name, "gpt-5.4-nano")
+        self.assertEqual(nano.info["max_input_tokens"], 400000)
 
     def test_o1_use_temp_false(self):
         # Test GitHub Copilot models
