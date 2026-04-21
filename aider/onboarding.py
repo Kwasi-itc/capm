@@ -15,6 +15,93 @@ from aider import urls
 from aider.io import InputOutput
 
 
+CODEX_SUBSCRIPTION_AUTH = "__codex_subscription_auth__"
+AUTH_DECLINED = "__auth_declined__"
+
+API_KEY_PROVIDER_DEFAULT_MODELS = {
+    "anthropic": "sonnet",
+    "deepseek": "deepseek",
+    "gemini": "gemini/gemini-2.5-pro-exp-03-25",
+    "openai": "gpt-4o",
+    "openrouter": None,
+}
+
+
+def has_configured_api_key():
+    return any(
+        os.environ.get(env_key)
+        for env_key in (
+            "ANTHROPIC_API_KEY",
+            "DEEPSEEK_API_KEY",
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "VERTEXAI_PROJECT",
+        )
+    )
+
+
+def prompt_for_api_key(args, io, analytics):
+    provider_names = ", ".join(sorted(API_KEY_PROVIDER_DEFAULT_MODELS))
+    provider = io.prompt_ask(
+        f"API provider ({provider_names}) [openai]:",
+        default="openai",
+    )
+    provider = (provider or "openai").strip().lower()
+    if provider in ("y", "yes"):
+        provider = "openai"
+
+    if provider not in API_KEY_PROVIDER_DEFAULT_MODELS:
+        io.tool_error(f"Unsupported API provider: {provider}")
+        io.tool_output(f"Supported providers: {provider_names}")
+        return None
+
+    api_key = io.prompt_ask(f"Enter {provider} API key:", password=True)
+    api_key = api_key.strip()
+    if not api_key:
+        io.tool_error("No API key provided.")
+        return None
+
+    env_var = f"{provider.upper()}_API_KEY"
+    os.environ[env_var] = api_key
+    analytics.event("api_key_entered", provider=provider)
+
+    if args.model:
+        return args.model
+
+    if provider == "openrouter":
+        return try_to_select_default_model()
+
+    return API_KEY_PROVIDER_DEFAULT_MODELS[provider]
+
+
+def offer_no_key_auth_choice(args, io, analytics):
+    if args.backend != "native" or has_configured_api_key():
+        return None
+
+    io.tool_warning("No API key was found.")
+    io.tool_output("Choose how CAPM should authenticate:")
+    io.tool_output("  A: enter an API key for native CAPM")
+    io.tool_output("  S: use a Codex subscription login")
+
+    while True:
+        choice = io.prompt_ask("Use (A)PI key or (S)ubscription login? [S]:", default="s")
+        choice = (choice or "s").strip().lower()
+        if choice in ("s", "subscription", "login", "y", "yes"):
+            analytics.event("auth_choice", method="codex_subscription")
+            return CODEX_SUBSCRIPTION_AUTH
+        if choice in ("a", "api", "api key", "key"):
+            analytics.event("auth_choice", method="api_key")
+            model = prompt_for_api_key(args, io, analytics)
+            if model:
+                return model
+            continue
+        if choice in ("q", "quit", "exit", "n", "no"):
+            return AUTH_DECLINED
+
+        io.tool_error("Please choose A for API key or S for subscription login.")
+
+
 def check_openrouter_tier(api_key):
     """
     Checks if the user is on a free tier for OpenRouter.

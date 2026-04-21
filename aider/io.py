@@ -1,5 +1,6 @@
 import base64
 import functools
+import getpass
 import os
 import shutil
 import signal
@@ -22,7 +23,7 @@ from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.output.vt100 import is_dumb_terminal
-from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
+from prompt_toolkit.shortcuts import CompleteStyle, PromptSession, prompt as prompt_toolkit_prompt
 from prompt_toolkit.styles import Style
 from pygments.lexers import MarkdownLexer, guess_lexer_for_filename
 from pygments.token import Token
@@ -915,7 +916,7 @@ class InputOutput:
         return is_yes
 
     @restore_multiline
-    def prompt_ask(self, question, default="", subject=None):
+    def prompt_ask(self, question, default="", subject=None, password=False):
         self.num_user_asks += 1
 
         # Ring the bell if needed
@@ -933,7 +934,17 @@ class InputOutput:
             res = "no"
         else:
             try:
-                if self.prompt_session:
+                if password:
+                    if self.prompt_session:
+                        res = prompt_toolkit_prompt(
+                            question + " ",
+                            default=default,
+                            style=style,
+                            is_password=True,
+                        )
+                    else:
+                        res = getpass.getpass(question + " ")
+                elif self.prompt_session:
                     res = self.prompt_session.prompt(
                         question + " ",
                         default=default,
@@ -946,7 +957,8 @@ class InputOutput:
                 # Treat EOF (Ctrl+D) as if the user pressed Enter
                 res = default
 
-        hist = f"{question.strip()} {res.strip()}"
+        logged_res = "<redacted>" if password and res else res.strip()
+        hist = f"{question.strip()} {logged_res}"
         self.append_chat_history(hist, linebreak=True, blockquote=True)
         if self.yes in (True, False):
             self.tool_output(hist)

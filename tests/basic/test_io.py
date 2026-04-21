@@ -423,6 +423,18 @@ class TestInputOutputMultilineMode(unittest.TestCase):
         io.prompt_ask("Test prompt?")
         self.assertTrue(io.multiline_mode)  # Should be restored
 
+    @patch("aider.io.prompt_toolkit_prompt", return_value="secret")
+    def test_password_prompt_does_not_reuse_chat_prompt_session(self, mock_prompt):
+        """Password prompts should not leave the chat session in password mode."""
+        io = InputOutput(fancy_input=True)
+        io.prompt_session = MagicMock()
+
+        result = io.prompt_ask("API key?", password=True)
+
+        self.assertEqual(result, "secret")
+        mock_prompt.assert_called_once()
+        io.prompt_session.prompt.assert_not_called()
+
     def test_ensure_hash_prefix(self):
         """Test that ensure_hash_prefix correctly adds # to valid hex colors"""
         from aider.io import ensure_hash_prefix

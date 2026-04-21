@@ -9,10 +9,13 @@ import requests
 
 # Import the functions to be tested
 from aider.onboarding import (
+    AUTH_DECLINED,
+    CODEX_SUBSCRIPTION_AUTH,
     check_openrouter_tier,
     exchange_code_for_key,
     find_available_port,
     generate_pkce_codes,
+    offer_no_key_auth_choice,
     offer_openrouter_oauth,
     select_default_model,
     try_to_select_default_model,
@@ -38,6 +41,9 @@ class DummyIO:
 
     def confirm_ask(self, *args, **kwargs):
         return False  # Default to no confirmation
+
+    def prompt_ask(self, *args, **kwargs):
+        return ""
 
     def offer_url(self, *args, **kwargs):
         pass
@@ -370,6 +376,58 @@ class TestOnboarding(unittest.TestCase):
         # Note: The warning comes from the second call within select_default_model,
         # not try_select itself.
         # We verify the final state and model returned.
+
+    # --- Tests for no-key auth choice ---
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_offer_no_key_auth_choice_subscription(self):
+        args = argparse.Namespace(backend="native", model=None)
+        io_mock = DummyIO()
+        io_mock.prompt_ask = MagicMock(return_value="s")
+        analytics_mock = DummyAnalytics()
+        analytics_mock.event = MagicMock()
+
+        result = offer_no_key_auth_choice(args, io_mock, analytics_mock)
+
+        self.assertEqual(result, CODEX_SUBSCRIPTION_AUTH)
+        analytics_mock.event.assert_called_with("auth_choice", method="codex_subscription")
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_offer_no_key_auth_choice_api_key(self):
+        args = argparse.Namespace(backend="native", model=None)
+        io_mock = DummyIO()
+        io_mock.prompt_ask = MagicMock(side_effect=["a", "openai", "sk-test"])
+        analytics_mock = DummyAnalytics()
+        analytics_mock.event = MagicMock()
+
+        result = offer_no_key_auth_choice(args, io_mock, analytics_mock)
+
+        self.assertEqual(result, "gpt-4o")
+        self.assertEqual(os.environ["OPENAI_API_KEY"], "sk-test")
+        io_mock.prompt_ask.assert_any_call("Enter openai API key:", password=True)
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-existing"}, clear=True)
+    def test_offer_no_key_auth_choice_existing_key(self):
+        args = argparse.Namespace(backend="native", model=None)
+        io_mock = DummyIO()
+        io_mock.prompt_ask = MagicMock()
+        analytics_mock = DummyAnalytics()
+
+        result = offer_no_key_auth_choice(args, io_mock, analytics_mock)
+
+        self.assertIsNone(result)
+        io_mock.prompt_ask.assert_not_called()
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_offer_no_key_auth_choice_declined(self):
+        args = argparse.Namespace(backend="native", model=None)
+        io_mock = DummyIO()
+        io_mock.prompt_ask = MagicMock(return_value="q")
+        analytics_mock = DummyAnalytics()
+
+        result = offer_no_key_auth_choice(args, io_mock, analytics_mock)
+
+        self.assertEqual(result, AUTH_DECLINED)
 
     # --- Tests for offer_openrouter_oauth ---
     @patch("aider.onboarding.start_openrouter_oauth_flow", return_value="new_or_key")

@@ -32,7 +32,13 @@ from aider.history import ChatSummary
 from aider.io import InputOutput
 from aider.llm import litellm  # noqa: F401; properly init litellm on launch
 from aider.models import ModelSettings
-from aider.onboarding import offer_openrouter_oauth, select_default_model
+from aider.onboarding import (
+    AUTH_DECLINED,
+    CODEX_SUBSCRIPTION_AUTH,
+    offer_no_key_auth_choice,
+    offer_openrouter_oauth,
+    select_default_model,
+)
 from aider.repo import ANY_GIT_ERROR, GitRepo
 from aider.report import report_uncaught_exceptions
 from aider.versioncheck import check_version, install_from_main_branch, install_upgrade
@@ -776,7 +782,18 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
             alias, model = parts
             models.MODEL_ALIASES[alias.strip()] = model.strip()
 
-    selected_model_name = select_default_model(args, io, analytics)
+    selected_model_name = offer_no_key_auth_choice(args, io, analytics)
+    if selected_model_name == CODEX_SUBSCRIPTION_AUTH:
+        analytics.event("codex backend session")
+        status = run_codex_backend(args, io, cwd=Path.cwd())
+        analytics.event("exit", reason="Codex backend ended")
+        return status
+    if selected_model_name == AUTH_DECLINED:
+        analytics.event("exit", reason="Authentication declined")
+        return 1
+
+    if not selected_model_name:
+        selected_model_name = select_default_model(args, io, analytics)
     if not selected_model_name:
         # Error message and analytics event are handled within select_default_model
         # It might have already offered OAuth if no model/keys were found.
