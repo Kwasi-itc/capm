@@ -62,6 +62,33 @@ def get_parser(default_config_files, git_root):
         default=None,
         help="Specify the model to use for the main chat",
     )
+    group.add_argument(
+        "--backend",
+        choices=["native", "codex"],
+        default="native",
+        help=(
+            "Choose the assistant backend: native uses CAPM/Aider with API keys, "
+            "codex launches the official Codex CLI agent"
+        ),
+    )
+    group.add_argument(
+        "--codex-command",
+        metavar="COMMAND",
+        default="codex",
+        help="Codex CLI executable to use when --backend codex is selected",
+    )
+    group.add_argument(
+        "--codex-model",
+        metavar="MODEL",
+        default=None,
+        help="Model to pass to Codex CLI with -m when --backend codex is selected",
+    )
+    group.add_argument(
+        "--codex-skip-login",
+        action="store_true",
+        default=False,
+        help="Skip running `codex login` before launching Codex CLI",
+    )
 
     ##########
     group = parser.add_argument_group("API Keys and settings")

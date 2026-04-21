@@ -23,6 +23,7 @@ from aider.analytics import Analytics
 from aider.args import get_parser
 from aider.coders import Coder
 from aider.coders.base_coder import UnknownEditFormat
+from aider.codex_backend import run_codex_backend
 from aider.commands import Commands, SwitchCoder
 from aider.copypaste import ClipboardWatcher
 from aider.deprecated import handle_deprecated_model_args
@@ -657,6 +658,12 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
         analytics.enable()
 
     analytics.event("launched")
+
+    if args.backend == "codex":
+        analytics.event("codex backend session")
+        status = run_codex_backend(args, io, cwd=Path.cwd())
+        analytics.event("exit", reason="Codex backend ended")
+        return status
 
     if args.gui and not return_coder:
         if not check_streamlit_install(io):

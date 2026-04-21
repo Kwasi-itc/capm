@@ -48,6 +48,21 @@ class TestMain(TestCase):
     def test_main_with_empty_dir_no_files_on_command(self):
         main(["--no-git", "--exit", "--yes"], input=DummyInput(), output=DummyOutput())
 
+    @patch("aider.main.run_codex_backend", return_value=0)
+    def test_main_codex_backend(self, mock_codex_backend):
+        status = main(
+            ["--backend", "codex", "--codex-skip-login", "--message", "fix tests"],
+            input=DummyInput(),
+            output=DummyOutput(),
+        )
+
+        self.assertEqual(status, 0)
+        mock_codex_backend.assert_called_once()
+        args = mock_codex_backend.call_args.args[0]
+        self.assertEqual(args.backend, "codex")
+        self.assertTrue(args.codex_skip_login)
+        self.assertEqual(args.message, "fix tests")
+
     def test_main_with_emptqy_dir_new_file(self):
         main(["foo.txt", "--yes", "--no-git", "--exit"], input=DummyInput(), output=DummyOutput())
         self.assertTrue(os.path.exists("foo.txt"))
